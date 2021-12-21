@@ -33,7 +33,8 @@ namespace CastleGenerator.Generator
             CreateSpawnPoint();
             if (InvalidWorld)
                 return;
-            TestCreateCastleRooms();
+            CreateCastleRooms();
+            //TestCreateCastleRooms();
             if (InvalidWorld)
                 return;
             PlaceTreasures();
@@ -144,14 +145,10 @@ namespace CastleGenerator.Generator
             List<RoomPosition> RoomsWithOpenConnectors = new List<RoomPosition>();
             RoomsWithOpenConnectors.Add(rooms[0]);
             Zone PickedZone = rooms[rooms.Count - 1].room.ParentZone;
-            bool GenerationFinished = false;
+            int StuckCheck = RoomsWithOpenConnectors.Count;
             while (true)
             {
-                if(RoomsWithOpenConnectors.Count == 0)
-                {
-                    GenerateInvalidWorld("Somehow the mod found a deadend.");
-                    return;
-                }
+                int LastPossibleRooms = 0, LastPossibleConnectors = 0, LastNewRoomPossibleConnectors = 0;
                 //Checking Progress...
                 int CurrentCastleDimension = 0;
                 foreach (RoomPosition room in rooms)
@@ -159,13 +156,23 @@ namespace CastleGenerator.Generator
                     CurrentCastleDimension += room.Position.Width * room.Position.Height;
                 }
                 {
-                    float Percentage = (int)((float)CurrentCastleDimension * 100 / MaxSize);
-                    progress.Message = "Generating Castle: Filled " + Percentage + "% of the map.";
-                    if (Percentage >= 70)
+                    double Percentage = System.Math.Round((double)CurrentCastleDimension * 100 / MaxSize, 1);
+                    progress.Message = "Generating Castle: Rooms Created: " + rooms.Count + " - Filled " + Percentage + "% of the map.";
+                    if (Percentage >= 60) //70
                     {
-                        GenerationFinished = true;
                         break;
                     }
+                    if (StuckCheck == 0)
+                    {
+                        GenerateInvalidWorld("World generator got stuck.\nRooms created: " + rooms.Count + "\nProgress: " + Percentage + "%");
+                        return;
+                    }
+                }
+                StuckCheck--;
+                if(RoomsWithOpenConnectors.Count == 0)
+                {
+                    GenerateInvalidWorld("Somehow the mod found a deadend.");
+                    return;
                 }
                 RoomPosition ParentRoom = RoomsWithOpenConnectors[RoomsWithOpenConnectors.Count - 1];
                 RoomType NewRoomType = RoomType.Normal;
@@ -187,20 +194,28 @@ namespace CastleGenerator.Generator
                     NewRoomType = RoomType.BossRoom;
                 }
                 List<Room> PossibleRooms = new List<Room>();
-                retryRoomPicking:
-                foreach (Room room in PickedZone.RoomTypes)
+            retryRoomPicking:
+                foreach (Room room in PickedZone.RoomTypes) //Game is not finding possible rooms
                 {
                     if(room.roomType == NewRoomType)
                     {
                         byte OpenConnectors = 0;
-                        foreach(Connector ParentConnector in ParentRoom.room.RoomConnectors)
+                        foreach(Connector connector in room.RoomConnectors)
                         {
-                            if(!IsConnectorConnected(ParentRoom, ParentConnector) && !IsConnectorBlocked(ParentRoom, ParentConnector) && CanUseConnector(ParentConnector))
+                            if(CanUseConnector(connector))
                             {
-                                OpenConnectors++;
+                                foreach (Connector ParentConnector in ParentRoom.room.RoomConnectors)
+                                {
+                                    if (CanUseConnector(ParentConnector) && CanConnectToConnector(ParentConnector, connector) && CanPlaceRoomHere(ParentConnector, ParentRoom, room))
+                                    {
+                                        OpenConnectors++;
+                                        break;
+                                    }
+                                }
                             }
                         }
-                        if ((CanCreateDeadEnds && ((!MakeForkedRoad && OpenConnectors > 1) || OpenConnectors > 2)) || OpenConnectors > 1)
+                        if((MakeForkedRoad && OpenConnectors > 2) || (CanCreateDeadEnds && OpenConnectors > 0) || OpenConnectors > 1)
+                        //if ((CanCreateDeadEnds && ((!MakeForkedRoad && OpenConnectors > 0) || OpenConnectors > 2)) || OpenConnectors > 1)
                         {
                             PossibleRooms.Add(room);
                         }
@@ -222,10 +237,11 @@ namespace CastleGenerator.Generator
                         }
                         else
                         {
-                            //Something should happen in case this exception happens.
+
                         }
                     }
                 }
+                LastPossibleRooms = PossibleRooms.Count;
                 bool Success = false;
                 while(PossibleRooms.Count > 0 && !Success)
                 {
@@ -240,34 +256,32 @@ namespace CastleGenerator.Generator
                             PossibleConnectors.Add(ParentConnector);
                         }
                     }
+                    LastPossibleConnectors = PossibleConnectors.Count;
                     while (PossibleConnectors.Count > 0 && !Success)
                     {
                         int PickedParentConnector = rand.Next(PossibleConnectors.Count);
                         Connector ParentConnector = PossibleConnectors[PickedParentConnector];
                         PossibleConnectors.RemoveAt(PickedParentConnector);
                         List<Connector> NewRoomPossibleConnectors = new List<Connector>();
-                        foreach (Connector NewRoomConnector in ParentRoom.room.RoomConnectors)
+                        foreach (Connector NewRoomConnector in NewRoom.RoomConnectors)
                         {
                             if(CanUseConnector(NewRoomConnector) && CanConnectToConnector(ParentConnector, NewRoomConnector))
                             {
                                 NewRoomPossibleConnectors.Add(NewRoomConnector);
                             }
                         }
+                        LastNewRoomPossibleConnectors = NewRoomPossibleConnectors.Count;
                         while (NewRoomPossibleConnectors.Count > 0 && !Success)
                         {
                             int PickedNewConnector = rand.Next(NewRoomPossibleConnectors.Count);
                             Connector NewConnector = NewRoomPossibleConnectors[PickedNewConnector];
                             NewRoomPossibleConnectors.RemoveAt(PickedNewConnector);
                             int RoomX = ParentRoom.Position.X, RoomY = ParentRoom.Position.Y;
-                            switch (ParentConnector.Position)
+                            switch (ParentConnector.Position) //Placement horizontally seems off. Vertically might be off too.
                             {
                                 case ConnectorPosition.Up:
-                                    RoomY -= NewRoom.Height;
                                     RoomX -= (NewConnector.PositionX - NewRoom.RoomTileStartX) - (ParentConnector.PositionX - ParentRoom.room.RoomTileStartX);
-                                    break;
-                                case ConnectorPosition.Right:
-                                    RoomX += ParentRoom.Position.Width;
-                                    RoomY -= (NewConnector.PositionY - NewRoom.RoomTileStartY) - (ParentConnector.PositionY - ParentRoom.room.RoomTileStartY);
+                                    RoomY -= NewRoom.Height;
                                     break;
                                 case ConnectorPosition.Down:
                                     RoomX -= (NewConnector.PositionX - NewRoom.RoomTileStartX) - (ParentConnector.PositionX - ParentRoom.room.RoomTileStartX);
@@ -277,10 +291,24 @@ namespace CastleGenerator.Generator
                                     RoomX -= NewRoom.Width;
                                     RoomY -= (NewConnector.PositionY - NewRoom.RoomTileStartY) - (ParentConnector.PositionY - ParentRoom.room.RoomTileStartY);
                                     break;
+                                case ConnectorPosition.Right:
+                                    RoomX += ParentRoom.Position.Width;
+                                    RoomY -= (NewConnector.PositionY - NewRoom.RoomTileStartY) - (ParentConnector.PositionY - ParentRoom.room.RoomTileStartY);
+                                    break;
                             }
                             if (!HasRoomHere(RoomX, RoomY, NewRoom.Width, NewRoom.Height) && PlaceRoom(NewRoom, RoomX, RoomY, DifficultyLevel))
                             {
+                                RoomPosition NewRoomPos = rooms[rooms.Count - 1];
+                                byte ConnectorCount = 0;
+                                foreach(Connector connector in NewRoomPos.room.RoomConnectors)
+                                {
+                                    if (!IsConnectorBlocked(NewRoomPos, connector))
+                                        ConnectorCount++;
+                                }
+                                if (ConnectorCount > 0)
+                                    RoomsWithOpenConnectors.Add(NewRoomPos);
                                 Success = true;
+                                PickedZone = NewRoom.ParentZone;
                             }
                         }
                     }
@@ -298,16 +326,62 @@ namespace CastleGenerator.Generator
                     if (SaveRoom > 0)
                         SaveRoom--;
                     else if (NewRoomType == RoomType.SaveRoom)
-                        CorridorRoom = (byte)rand.Next(12, 17);
+                        SaveRoom = (byte)rand.Next(12, 17);
+                    if(NewRoomType == RoomType.BossRoom)
+                    {
+                        CreateBoss = false;
+                    }
+                    else
+                    {
+                        CreateBoss = rooms.Count % 250 == 0; //Change this in the future.
+                    }
+                    bool HasConnectorOpened = false;
                     foreach(Connector c in ParentRoom.room.RoomConnectors)
                     {
-                        if(IsConnectorBlocked(ParentRoom, c) || IsConnectorConnected(ParentRoom, c))
+                        if(!IsConnectorBlocked(ParentRoom, c) && !IsConnectorConnected(ParentRoom, c))
                         {
-                            RoomsWithOpenConnectors.Remove(ParentRoom);
+                            HasConnectorOpened = true;
+                            break;
                         }
                     }
+                    if (!HasConnectorOpened)
+                    {
+                        RoomsWithOpenConnectors.Remove(ParentRoom);
+                    }
+                    StuckCheck = RoomsWithOpenConnectors.Count * 2;
+                    if (StuckCheck > 1000)
+                        StuckCheck = 1000;
                 }
+                else
+                {
+                    //progress.Message = "Attempt#" + StuckCheck + " - Rooms: " + LastPossibleRooms + "  Connectors: " + LastPossibleConnectors + "  New Connectors: " + LastNewRoomPossibleConnectors;
+                    //System.Threading.Thread.Sleep(1000);
+                    RoomsWithOpenConnectors.Remove(ParentRoom);
+                    RoomsWithOpenConnectors.Insert(0, ParentRoom);
+                }
+
             }
+        }
+
+        private bool CanPlaceRoomHere(Connector ReferenceConnector, RoomPosition ReferenceRoom, Room NewRoom)
+        {
+            return CanPlaceRoomHere(ReferenceConnector, ReferenceRoom, NewRoom.Width, NewRoom.Height);
+        }
+
+        private bool CanPlaceRoomHere(Connector ReferenceConnector, RoomPosition ReferenceRoom, int Width, int Height)
+        {
+            switch (ReferenceConnector.Position)
+            {
+                case ConnectorPosition.Up:
+                    return ReferenceRoom.Position.Y + ReferenceRoom.Position.Y - ReferenceRoom.room.RoomTileStartY - Height >= 50;
+                case ConnectorPosition.Down:
+                    return ReferenceRoom.Position.Y + ReferenceRoom.Position.Y - ReferenceRoom.room.RoomTileStartY + ReferenceRoom.Position.Height + Height < Main.maxTilesY - 50;
+                case ConnectorPosition.Left:
+                    return ReferenceRoom.Position.X + ReferenceRoom.Position.X - ReferenceRoom.room.RoomTileStartX - Width >= 50;
+                case ConnectorPosition.Right:
+                    return ReferenceRoom.Position.X + ReferenceRoom.Position.X - ReferenceRoom.room.RoomTileStartX + ReferenceRoom.Position.Width + Width < Main.maxTilesX - 50;
+            }
+            return false;
         }
 
         private void TestCreateCastleRooms()
@@ -399,16 +473,16 @@ namespace CastleGenerator.Generator
                         switch (connector.Position)
                         {
                             case ConnectorPosition.Up:
-                                NewRoomPos.Y -= NewRoom.Height;
                                 NewRoomPos.X -= (otherconnector.PositionX - NewRoom.RoomTileStartX) - (connector.PositionX - Room.room.RoomTileStartX);
+                                NewRoomPos.Y -= NewRoom.Height;
                                 break;
                             case ConnectorPosition.Down:
                                 NewRoomPos.X -= (otherconnector.PositionX - NewRoom.RoomTileStartX) - (connector.PositionX - Room.room.RoomTileStartX);
                                 NewRoomPos.Y += Room.room.Height;
                                 break;
                             case ConnectorPosition.Left:
-                                NewRoomPos.Y -= (otherconnector.PositionY - NewRoom.RoomTileStartY) - (connector.PositionY - Room.room.RoomTileStartY);
                                 NewRoomPos.X -= NewRoom.Width;
+                                NewRoomPos.Y -= (otherconnector.PositionY - NewRoom.RoomTileStartY) - (connector.PositionY - Room.room.RoomTileStartY);
                                 break;
                             case ConnectorPosition.Right:
                                 NewRoomPos.X += Room.room.Width;
@@ -807,8 +881,8 @@ namespace CastleGenerator.Generator
             if (Connector1.Distance != Connector2.Distance)
                 return false;
             if (Connector1.Requirement == Connector2.Requirement)
-                return true;
-            return CanUseConnector(Connector2);
+                return CanUseConnector(Connector2);
+            return false;
         }
 
         public bool IsConnectorBlocked(RoomPosition Room, Connector connector)
