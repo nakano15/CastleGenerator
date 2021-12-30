@@ -41,6 +41,7 @@ namespace CastleGenerator.Generator
             PlaceMonsters();
             SpawnRoomTiles();
             CheckForDisconnectedConnectors();
+            BlockOpenSpaces();
             FinishGeneration();
         }
 
@@ -142,8 +143,10 @@ namespace CastleGenerator.Generator
             bool CanCreateDeadEnds = false;
             bool CreateBoss = false;
             byte ForkedRoad = (byte)rand.Next(2, 4);
-            List<RoomPosition> RoomsWithOpenConnectors = new List<RoomPosition>();
-            RoomsWithOpenConnectors.Add(rooms[0]);
+            List<RoomPosition> RoomsWithOpenConnectors = new List<RoomPosition>
+            {
+                rooms[0]
+            };
             Zone PickedZone = rooms[rooms.Count - 1].room.ParentZone;
             int StuckCheck = RoomsWithOpenConnectors.Count;
             while (true)
@@ -299,6 +302,7 @@ namespace CastleGenerator.Generator
                             if (!HasRoomHere(RoomX, RoomY, NewRoom.Width, NewRoom.Height) && PlaceRoom(NewRoom, RoomX, RoomY, DifficultyLevel))
                             {
                                 RoomPosition NewRoomPos = rooms[rooms.Count - 1];
+                                NewRoomPos.Difficulty = DifficultyLevel;
                                 byte ConnectorCount = 0;
                                 foreach(Connector connector in NewRoomPos.room.RoomConnectors)
                                 {
@@ -315,6 +319,7 @@ namespace CastleGenerator.Generator
                 }
                 if (Success)
                 {
+                    RoomPosition NewRoomPos = rooms[rooms.Count - 1];
                     if (ForkedRoad > 0)
                         ForkedRoad--;
                     else if (MakeForkedRoad)
@@ -327,6 +332,7 @@ namespace CastleGenerator.Generator
                         SaveRoom--;
                     else if (NewRoomType == RoomType.SaveRoom)
                         SaveRoom = (byte)rand.Next(12, 17);
+                    DifficultyLevel += (float)NewRoomPos.Position.Width / NewRoomPos.Position.Height * 0.1f;
                     if(NewRoomType == RoomType.BossRoom)
                     {
                         CreateBoss = false;
@@ -348,7 +354,7 @@ namespace CastleGenerator.Generator
                     {
                         RoomsWithOpenConnectors.Remove(ParentRoom);
                     }
-                    StuckCheck = RoomsWithOpenConnectors.Count * 2;
+                    StuckCheck = RoomsWithOpenConnectors.Count;
                     if (StuckCheck > 1000)
                         StuckCheck = 1000;
                 }
@@ -562,7 +568,6 @@ namespace CastleGenerator.Generator
             progress.Message = "Adding Treasures to the Castle";
             float LifeCrystalSpawnChance = 0.5f;
             float TreasureSpawnChance = 0.2f;
-            List<int> PickedItemIDs = new List<int>();
             for(int r = 0; r < rooms.Count; r++)
             {
                 RoomPosition roompos = rooms[r];
@@ -579,7 +584,7 @@ namespace CastleGenerator.Generator
                     PossiblePositions.RemoveAt(Picked);
                     if (rand.NextFloat() < LifeCrystalSpawnChance && LifeCrystals < 20)
                     {
-                        ItemToSpawn = Terraria.ID.ItemID.LifeCrystal;
+                        ItemToSpawn = ItemID.LifeCrystal;
                         if (LifeCrystalSpawnChance > 1)
                             LifeCrystalSpawnChance -= 1;
                         else
@@ -588,11 +593,22 @@ namespace CastleGenerator.Generator
                     }
                     else if(rand.NextFloat() < TreasureSpawnChance)
                     {
-                        while (ItemToSpawn == 0 || PickedItemIDs.Contains(ItemToSpawn))
+                        List<int> PossibleLoots = new List<int>();
+                        int LastLootIndex = 0;
+                        while(LastLootIndex < PossibleLoots.Count)
                         {
-                            ItemToSpawn = Main.rand.Next(1, Main.maxItemTypes);
+                            if(roompos.Difficulty >= (int)loot[LastLootIndex].Difficulty)
+                            {
+                                PossibleLoots.Add(LastLootIndex);
+                            }
+                            LastLootIndex++;
                         }
-                        PickedItemIDs.Add(ItemToSpawn);
+                        if(PossibleLoots.Count > 0)
+                        {
+                            int PickedLoot = rand.Next(PossibleLoots.Count);
+                            ItemToSpawn = loot[PossibleLoots[PickedLoot]].ItemID;
+                            loot.RemoveAt(PossibleLoots[PickedLoot]);
+                        }
                         TreasureSpawnChance--;
                     }
                     if (ItemToSpawn > 0)
@@ -880,7 +896,7 @@ namespace CastleGenerator.Generator
         {
             if (Connector1.Distance != Connector2.Distance)
                 return false;
-            if (Connector1.Requirement == Connector2.Requirement)
+            if (Connector1.Requirement == Connector2.Requirement && Connector1.IsOpposite(Connector2))
                 return CanUseConnector(Connector2);
             return false;
         }
@@ -974,6 +990,17 @@ namespace CastleGenerator.Generator
             }
         }
 
+        private void BlockOpenSpaces()
+        {
+            /*for(int x = 49; x < Main.maxTilesX - 49; x++)
+            {
+                for (int y = 50; y < Main.maxTilesY - 49; y++)
+                {
+
+                }
+            }*/
+        }
+
         private void FinishGeneration()
         {
             progress.Message = "Finishing up.";
@@ -1061,7 +1088,7 @@ namespace CastleGenerator.Generator
         private bool PlaceRoom(Room room, int X, int Y, float DifficultyLevel, bool Starter = false)
         {
             Rectangle rect = new Rectangle(X, Y, room.Width, room.Height);
-            if (!Starter && (X < 50|| X + room.Width >= Main.maxTilesX - 50 || Y < 50 || Y + room.Height >= Main.maxTilesY - 50))
+            if (!Starter && (X < 50|| X + room.Width >= Main.maxTilesX - 50 || Y < Main.worldSurface * 0.5f || Y + room.Height >= Main.maxTilesY - 50))
             {
                 return false;
             }

@@ -23,6 +23,8 @@ namespace CastleGenerator.DB.Zones.Courtyard
             AddTileInfo(53, 53, 53).SetWall(WallID.EbonstoneBrick);
 
             AddTreasurePosition(105, 100);
+
+            AddFurniturePosition(104, 88, TileID.Chandeliers, 2);
         }
     }
 }
