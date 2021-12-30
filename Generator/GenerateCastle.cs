@@ -139,7 +139,6 @@ namespace CastleGenerator.Generator
             int MaxSize = (Main.maxTilesX - 100) * (Main.maxTilesY - 100);
             byte CorridorRoom = (byte)rand.Next(2);
             byte SaveRoom = (byte)rand.Next(5, 8);
-            float DifficultyLevel = 1;
             bool CanCreateDeadEnds = false;
             bool CreateBoss = false;
             byte ForkedRoad = (byte)rand.Next(2, 4);
@@ -149,6 +148,7 @@ namespace CastleGenerator.Generator
             };
             Zone PickedZone = rooms[rooms.Count - 1].room.ParentZone;
             int StuckCheck = RoomsWithOpenConnectors.Count;
+            double GenerationPercentage = 0;
             while (true)
             {
                 int LastPossibleRooms = 0, LastPossibleConnectors = 0, LastNewRoomPossibleConnectors = 0;
@@ -160,13 +160,16 @@ namespace CastleGenerator.Generator
                 }
                 {
                     double Percentage = System.Math.Round((double)CurrentCastleDimension * 100 / MaxSize, 1);
+                    GenerationPercentage = Percentage;
                     progress.Message = "Generating Castle: Rooms Created: " + rooms.Count + " - Filled " + Percentage + "% of the map.";
-                    if (Percentage >= 60) //70
+                    /*if (Percentage >= 50) //70
                     {
                         break;
-                    }
+                    }*/
                     if (StuckCheck == 0)
                     {
+                        if (Percentage >= 60)
+                            break;
                         GenerateInvalidWorld("World generator got stuck.\nRooms created: " + rooms.Count + "\nProgress: " + Percentage + "%");
                         return;
                     }
@@ -299,10 +302,9 @@ namespace CastleGenerator.Generator
                                     RoomY -= (NewConnector.PositionY - NewRoom.RoomTileStartY) - (ParentConnector.PositionY - ParentRoom.room.RoomTileStartY);
                                     break;
                             }
-                            if (!HasRoomHere(RoomX, RoomY, NewRoom.Width, NewRoom.Height) && PlaceRoom(NewRoom, RoomX, RoomY, DifficultyLevel))
+                            if (!HasRoomHere(RoomX, RoomY, NewRoom.Width, NewRoom.Height) && PlaceRoom(NewRoom, RoomX, RoomY, ParentRoom.Difficulty + (float)NewRoom.Width / NewRoom.Height * 0.1f))
                             {
                                 RoomPosition NewRoomPos = rooms[rooms.Count - 1];
-                                NewRoomPos.Difficulty = DifficultyLevel;
                                 byte ConnectorCount = 0;
                                 foreach(Connector connector in NewRoomPos.room.RoomConnectors)
                                 {
@@ -332,7 +334,6 @@ namespace CastleGenerator.Generator
                         SaveRoom--;
                     else if (NewRoomType == RoomType.SaveRoom)
                         SaveRoom = (byte)rand.Next(12, 17);
-                    DifficultyLevel += (float)NewRoomPos.Position.Width / NewRoomPos.Position.Height * 0.1f;
                     if(NewRoomType == RoomType.BossRoom)
                     {
                         CreateBoss = false;
