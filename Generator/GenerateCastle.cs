@@ -3,6 +3,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.World.Generation;
 using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,14 +15,85 @@ namespace CastleGenerator.Generator
         private List<RoomPosition> rooms = new List<RoomPosition>();
         private GenerationProgress progress;
         private bool InvalidWorld = false;
-        private int RoomsToGenerate = 250;
-        public static Terraria.Utilities.UnifiedRandom rand { get { return WorldGen.genRand; } }
+        public int RoomsToGenerate = -1;
+        public Terraria.Utilities.UnifiedRandom rand
+        {
+            get
+            {
+                if (randomizer != null)
+                    return randomizer;
+                return WorldGen.genRand;
+            }
+        }
+        public Terraria.Utilities.UnifiedRandom randomizer = null;
         private byte LifeCrystals = 0;
-        private List<Loot> loot = new List<Loot>();
-        private bool PlayerGotDoubleJump = false, PlayerGotFlight = false, PlayerGotRod = false, PlayerGotSwiming = false, PlayerGotLavaImmunity = false, PlayerGotRunningBoots = false;
+        public List<Loot> loot = new List<Loot>();
+        private bool PlayerGotDoubleJump = false, PlayerGotFlight = false, PlayerGotRod = false, PlayerGotSwiming = false, PlayerGotLavaImmunity = false, PlayerGotRunningBoots = false, 
+            PlayerGotWaterwalking = false, PlayerGotExtraJumpHeight = false;
+        private int FinalityRoomPosition = -1;
+        public int Finality = 0;
+        public float MinDifficultyLevel = 1;
+        public float MaxDifficultyLevel = 10;
+        public bool CreateLifeCrystals = true, GenerateLootTable = true;
 
         public GenerateCastle() : base("CastleGenerator: Generate Castle", LoadWeight)
         {
+            randomizer = new Terraria.Utilities.UnifiedRandom();
+        }
+
+        public void InitializeCastle()
+        {
+            GenerateLootTable = true;
+            CreateLifeCrystals = true;
+            randomizer = null;
+            LifeCrystals = 0;
+            InvalidWorld = false;
+            RoomsToGenerate = -1;
+            loot.Clear();
+            PlayerGotDoubleJump = false;
+            PlayerGotFlight = false;
+            PlayerGotRod = false;
+            PlayerGotSwiming = false;
+            PlayerGotLavaImmunity = false;
+            PlayerGotRunningBoots = false;
+            PlayerGotWaterwalking = false;
+            PlayerGotExtraJumpHeight = false;
+            FinalityRoomPosition = -1;
+            Finality = 0;
+            MinDifficultyLevel = 1;
+            MaxDifficultyLevel = 10;
+        }
+
+        public void ChangeSeed(int NewSeed)
+        {
+            randomizer = new Terraria.Utilities.UnifiedRandom(NewSeed);
+        }
+
+        public void ApplyFlagsBasedOnPlayer(Player player)
+        {
+            PlayerGotDoubleJump = HasItemEquipped(player, new int[] { ItemID.CloudinaBottle, ItemID.CloudinaBalloon, ItemID.BlizzardinaBottle, ItemID.BlizzardinaBalloon,
+                ItemID.SandstorminaBottle, ItemID.SandstorminaBalloon, ItemID.FartinaJar, ItemID.FartInABalloon, ItemID.BalloonHorseshoeFart, ItemID.BundleofBalloons,
+                ItemID.RocketBoots, ItemID.SpectreBoots});
+            PlayerGotFlight = player.armor.Skip(3).Take(6).Any(x => x.wingSlot > 0);
+            PlayerGotRod = player.inventory.Any(x => x.type == ItemID.RodofDiscord);
+            PlayerGotSwiming = HasItemEquipped(player, new int[] { ItemID.Flipper, ItemID.DivingGear, ItemID.ArcticDivingGear, ItemID.NeptunesShell, ItemID.MoonShell, ItemID.CelestialShell });
+            PlayerGotLavaImmunity = HasItemEquipped(player, new int[] { ItemID.LavaWaders, ItemID.LavaCharm });
+            PlayerGotRunningBoots = HasItemEquipped(player, new int[] { ItemID.HermesBoots, ItemID.FlurryBoots, ItemID.FrostsparkBoots, ItemID.LightningBoots, ItemID.SailfishBoots,
+                ItemID.SpectreBoots});
+            PlayerGotWaterwalking = HasItemEquipped(player, new int[] { ItemID.WaterWalkingBoots, ItemID.ObsidianWaterWalkingBoots, ItemID.LavaWaders });
+            PlayerGotExtraJumpHeight = HasItemEquipped(player, new int[] { ItemID.BalloonHorseshoeFart, ItemID.BalloonHorseshoeHoney, ItemID.BalloonHorseshoeSharkron, ItemID.BalloonPufferfish,
+                ItemID.BlizzardinaBalloon, ItemID.BlizzardinaBalloon, ItemID.BlueHorseshoeBalloon, ItemID.BundleofBalloons, ItemID.CloudinaBalloon, ItemID.FartInABalloon,
+                ItemID.HoneyBalloon, ItemID.SandstorminaBalloon, ItemID.SharkronBalloon, ItemID.ShinyRedBalloon, ItemID.WhiteHorseshoeBalloon, ItemID.YellowHorseshoeBalloon});
+        }
+
+        private bool HasItemEquipped(Player player, int[] EquipmentIDs)
+        {
+            for(int i = 3; i < 9; i++)
+            {
+                if (EquipmentIDs.Contains(player.armor[i].type))
+                    return true;
+            }
+            return false;
         }
 
         public override void Apply(GenerationProgress progress)
@@ -37,6 +109,7 @@ namespace CastleGenerator.Generator
             //TestCreateCastleRooms();
             if (InvalidWorld)
                 return;
+            CreateExtraCastleRooms();
             PlaceTreasures();
             PlaceMonsters();
             SpawnRoomTiles();
@@ -125,7 +198,7 @@ namespace CastleGenerator.Generator
             RoomPositionY += -StartingRoom.Height + PickedConnector.PositionY - StartingRoom.RoomTileStartY;
             if (!PickedConnector.Horizontal)
                 RoomPositionY += PickedConnector.Distance;
-            if (!PlaceRoom(StartingRoom, RoomPositionX, RoomPositionY, 1, true))
+            if (!PlaceRoom(StartingRoom, RoomPositionX, RoomPositionY, 0, true))
             {
                 GenerateInvalidWorld("Failed to create starting room.");
                 return;
@@ -149,9 +222,11 @@ namespace CastleGenerator.Generator
             Zone PickedZone = rooms[rooms.Count - 1].room.ParentZone;
             int StuckCheck = RoomsWithOpenConnectors.Count;
             double GenerationPercentage = 0;
-            while (true)
+            float HighestRoomDifficulty = 0;
+            while (RoomsToGenerate < 0 || RoomsToGenerate > 0)
             {
                 int LastPossibleRooms = 0, LastPossibleConnectors = 0, LastNewRoomPossibleConnectors = 0;
+                bool CreateFinalityRoom = Finality > 0 && FinalityRoomPosition == -1 && RoomsToGenerate == 1;
                 //Checking Progress...
                 int CurrentCastleDimension = 0;
                 foreach (RoomPosition room in rooms)
@@ -162,10 +237,6 @@ namespace CastleGenerator.Generator
                     double Percentage = System.Math.Round((double)CurrentCastleDimension * 100 / MaxSize, 1);
                     GenerationPercentage = Percentage;
                     progress.Message = "Generating Castle: Rooms Created: " + rooms.Count + " - Filled " + Percentage + "% of the map.";
-                    /*if (Percentage >= 50) //70
-                    {
-                        break;
-                    }*/
                     if (StuckCheck == 0)
                     {
                         if (Percentage >= 60)
@@ -183,7 +254,12 @@ namespace CastleGenerator.Generator
                 RoomPosition ParentRoom = RoomsWithOpenConnectors[RoomsWithOpenConnectors.Count - 1];
                 RoomType NewRoomType = RoomType.Normal;
                 bool MakeForkedRoad = false;
-                if (ForkedRoad == 0)
+                if (CreateFinalityRoom)
+                {
+                    NewRoomType = RoomType.Treasure;
+                    FinalityRoomPosition = rooms.Count;
+                }
+                else if (ForkedRoad == 0)
                 {
                     MakeForkedRoad = true;
                 }
@@ -239,6 +315,7 @@ namespace CastleGenerator.Generator
                         if (MakeForkedRoad)
                         {
                             MakeForkedRoad = false;
+                            CreateFinalityRoom = false;
                             goto retryRoomPicking;
                         }
                         else
@@ -305,6 +382,8 @@ namespace CastleGenerator.Generator
                             if (!HasRoomHere(RoomX, RoomY, NewRoom.Width, NewRoom.Height) && PlaceRoom(NewRoom, RoomX, RoomY, ParentRoom.Difficulty + (float)NewRoom.Width / NewRoom.Height * 0.1f))
                             {
                                 RoomPosition NewRoomPos = rooms[rooms.Count - 1];
+                                if (NewRoomPos.Difficulty > HighestRoomDifficulty)
+                                    HighestRoomDifficulty = NewRoomPos.Difficulty;
                                 byte ConnectorCount = 0;
                                 foreach(Connector connector in NewRoomPos.room.RoomConnectors)
                                 {
@@ -334,6 +413,7 @@ namespace CastleGenerator.Generator
                         SaveRoom--;
                     else if (NewRoomType == RoomType.SaveRoom)
                         SaveRoom = (byte)rand.Next(12, 17);
+                    if(RoomsToGenerate > 0) RoomsToGenerate--;
                     if(NewRoomType == RoomType.BossRoom)
                     {
                         CreateBoss = false;
@@ -366,7 +446,98 @@ namespace CastleGenerator.Generator
                     RoomsWithOpenConnectors.Remove(ParentRoom);
                     RoomsWithOpenConnectors.Insert(0, ParentRoom);
                 }
+            }
+            //Normalize Difficulty Levels;
+            if (HighestRoomDifficulty > 0)
+            {
+                float Normalized = 1f / HighestRoomDifficulty;
+                for (int r = 0; r < rooms.Count; r++)
+                {
+                    RoomPosition room = rooms[r];
+                    room.Difficulty = MinDifficultyLevel - room.Difficulty * Normalized * MaxDifficultyLevel;
+                }
+            }
+        }
 
+        private void CreateExtraCastleRooms()
+        {
+            byte RoomsUntilSavePoint = 15;
+            int LastMap = rooms.Count;
+            for (int i = 0; i < LastMap; i++)
+            {
+                progress.Message = "Generating Castle: Adding extra rooms [" + i + "/" + LastMap + "].";
+                RoomPosition roomPos = rooms[i];
+                Room room = roomPos.room;
+                Zone zone = room.ParentZone;
+                foreach (Connector c in room.RoomConnectors)
+                {
+                    if (CanUseConnector(c) && !IsConnectorConnected(roomPos, c))
+                    {
+                        //Try Adding Room
+                        if (RoomsUntilSavePoint == 0)
+                        {
+                            List<Room> PossibleRooms = new List<Room>();
+                            foreach(Room r in zone.RoomTypes)
+                            {
+                                if(r.roomType == RoomType.SaveRoom && CanPlaceRoomHere(c, roomPos, r))
+                                {
+                                    PossibleRooms.Add(r);
+                                }
+                            }
+                            while(PossibleRooms.Count > 0)
+                            {
+                                int p = rand.Next(PossibleRooms.Count);
+                                Room NewRoom = PossibleRooms[p];
+                                PossibleRooms.RemoveAt(p);
+                                if(PlaceRoom(NewRoom, roomPos, c, roomPos.Difficulty))
+                                {
+                                    RoomsUntilSavePoint = 15;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            byte RoomsToCreate = (byte)rand.Next(1, 4);
+                            if (rand.Next(3) == 0)
+                                RoomsToCreate = (byte)rand.Next(3, 7);
+                            RoomType LastType = RoomType.Normal;
+                            while (RoomsToCreate > 0)
+                            {
+                                progress.Message = "Creating room " + RoomsToCreate;
+                                RoomsToCreate--;
+                                List<Room> PossibleRooms = new List<Room>();
+                                foreach (Room r in zone.RoomTypes)
+                                {
+                                    if (r.roomType != LastType && (RoomsToCreate > 0 ? (r.roomType == RoomType.Normal || r.roomType == RoomType.Corridor || r.roomType == RoomType.Treasure) : (r.roomType == RoomType.Treasure)))
+                                    {
+                                        if (CanPlaceRoomHere(c, roomPos, r))
+                                            PossibleRooms.Add(r);
+                                    }
+                                }
+                                while (PossibleRooms.Count > 0)
+                                {
+                                    progress.Message = "Trying to place rooms: " + PossibleRooms.Count;
+                                    int p = rand.Next(PossibleRooms.Count);
+                                    Room PickedRoom = PossibleRooms[p];
+                                    PossibleRooms.RemoveAt(p);
+                                    if (PlaceRoom(PickedRoom, roomPos, c, roomPos.Difficulty))
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (room.roomType == RoomType.SaveRoom)
+                {
+                    RoomsUntilSavePoint = 15;
+                }
+                else if(RoomsUntilSavePoint > 0)
+                {
+                    RoomsUntilSavePoint--;
+                }
             }
         }
 
@@ -413,7 +584,7 @@ namespace CastleGenerator.Generator
                         rooms.RemoveAt(rooms.Count - 1);
                     }
                 }
-                float Difficulty = 1f + (float)rooms.Count * 10 / RoomsToGenerate;
+                float Difficulty = MinDifficultyLevel + (float)rooms.Count * MaxDifficultyLevel / RoomsToGenerate;
                 progress.Message = "Generating Castle Rooms. (" + RoomsToGenerate + ")";
                 int DisconnectedConnectors = GetDisconnectedConnectors();
                 if(rooms.Count > 1 && DisconnectedConnectors == 0)
@@ -534,7 +705,7 @@ namespace CastleGenerator.Generator
                 {
                     SpawnSlots.Add(i);
                 }
-                float DifficultyGrade = room.Difficulty + 0.5f * room.Treasures.Count;
+                float DifficultyGrade = 0.5f + room.Difficulty + 0.5f * room.Treasures.Count;
                 while(SpawnSlots.Count > 0)
                 {
                     int Slot = rand.Next(SpawnSlots.Count);
@@ -565,10 +736,11 @@ namespace CastleGenerator.Generator
 
         private void PlaceTreasures()
         {
-            CreateLootTable();
+            if (GenerateLootTable) CreateLootTable();
             progress.Message = "Adding Treasures to the Castle";
             float LifeCrystalSpawnChance = 0.5f;
             float TreasureSpawnChance = 0.2f;
+            bool SpawnedFinalityLoot = false;
             for(int r = 0; r < rooms.Count; r++)
             {
                 RoomPosition roompos = rooms[r];
@@ -583,7 +755,12 @@ namespace CastleGenerator.Generator
                     int ItemToSpawn = 0;
                     int Picked = rand.Next(PossiblePositions.Count);
                     PossiblePositions.RemoveAt(Picked);
-                    if (rand.NextFloat() < LifeCrystalSpawnChance && LifeCrystals < 20)
+                    if(r == FinalityRoomPosition && !SpawnedFinalityLoot)
+                    {
+                        ItemToSpawn = Finality;
+                        SpawnedFinalityLoot = true;
+                    }
+                    else if (CreateLifeCrystals && rand.NextFloat() < LifeCrystalSpawnChance && LifeCrystals < 20)
                     {
                         ItemToSpawn = ItemID.LifeCrystal;
                         if (LifeCrystalSpawnChance > 1)
@@ -625,6 +802,15 @@ namespace CastleGenerator.Generator
 
         private void CreateLootTable()
         {
+            for (int i = 0; i < 5; i++)
+            {
+                AddLoot(ItemID.GreaterHealingPotion, DifficultyLevel.Hard);
+                AddLoot(ItemID.GreaterManaPotion, DifficultyLevel.Hard);
+                AddLoot(ItemID.HealingPotion, DifficultyLevel.Easy);
+                AddLoot(ItemID.ManaPotion, DifficultyLevel.Easy);
+                AddLoot(ItemID.LesserHealingPotion);
+                AddLoot(ItemID.LesserManaPotion);
+            }
             //Swords
             AddLoot(ItemID.IronBroadsword);
             AddLoot(ItemID.BoneSword);
@@ -947,7 +1133,9 @@ namespace CastleGenerator.Generator
                 case ConnectorRequirement.None:
                     return true;
                 case ConnectorRequirement.Honey:
-                    return true;
+                    return PlayerGotSwiming;
+                case ConnectorRequirement.Waterwalking:
+                    return PlayerGotWaterwalking;
             }
             return false;
         }
@@ -1022,7 +1210,7 @@ namespace CastleGenerator.Generator
                 }
                 WorldMod.Rooms.Add(ri);
             }
-            
+            randomizer = null;
         }
 
         private bool IsConnectorConnected(RoomPosition room, Connector connector)
@@ -1081,6 +1269,54 @@ namespace CastleGenerator.Generator
             foreach(RoomPosition room in rooms)
             {
                 if (room.Position.Intersects(rect))
+                    return true;
+            }
+            return false;
+        }
+
+        private bool PlaceRoom(Room NewRoom, RoomPosition ParentRoom, Connector ParentConnector, float DifficultyLevel, Connector PickedConnector = null)
+        {
+            List<Connector> PossibleConnectors = new List<Connector>();
+            if (PickedConnector == null)
+            {
+                foreach (Connector nc in NewRoom.RoomConnectors)
+                {
+                    if (CanUseConnector(nc) && !IsConnectorBlocked(ParentRoom, ParentConnector) && CanConnectToConnector(nc, ParentConnector) && CanPlaceRoomHere(ParentConnector, ParentRoom, NewRoom))
+                    {
+                        PossibleConnectors.Add(nc);
+                    }
+                }
+            }
+            else
+            {
+                PossibleConnectors.Add(PickedConnector);
+            }
+            while (PossibleConnectors.Count > 0)
+            {
+                int p = rand.Next(PossibleConnectors.Count);
+                Connector NewConnector = PossibleConnectors[p];
+                PossibleConnectors.RemoveAt(p);
+                int RoomX = ParentRoom.Position.X, RoomY = ParentRoom.Position.Y;
+                switch (ParentConnector.Position) //Placement horizontally seems off. Vertically might be off too.
+                {
+                    case ConnectorPosition.Up:
+                        RoomX -= (NewConnector.PositionX - NewRoom.RoomTileStartX) - (ParentConnector.PositionX - ParentRoom.room.RoomTileStartX);
+                        RoomY -= NewRoom.Height;
+                        break;
+                    case ConnectorPosition.Down:
+                        RoomX -= (NewConnector.PositionX - NewRoom.RoomTileStartX) - (ParentConnector.PositionX - ParentRoom.room.RoomTileStartX);
+                        RoomY += ParentRoom.Position.Height;
+                        break;
+                    case ConnectorPosition.Left:
+                        RoomX -= NewRoom.Width;
+                        RoomY -= (NewConnector.PositionY - NewRoom.RoomTileStartY) - (ParentConnector.PositionY - ParentRoom.room.RoomTileStartY);
+                        break;
+                    case ConnectorPosition.Right:
+                        RoomX += ParentRoom.Position.Width;
+                        RoomY -= (NewConnector.PositionY - NewRoom.RoomTileStartY) - (ParentConnector.PositionY - ParentRoom.room.RoomTileStartY);
+                        break;
+                }
+                if (PlaceRoom(NewRoom, RoomX, RoomY, DifficultyLevel, false))
                     return true;
             }
             return false;
@@ -1349,30 +1585,6 @@ namespace CastleGenerator.Generator
             {
                 this.ItemID = ItemID;
                 this.SpawnSlot = SpawnSlot;
-            }
-        }
-
-        public struct Loot
-        {
-            public int ItemID;
-            public LootType ltype;
-            public DifficultyLevel Difficulty;
-
-            public Loot(int ItemID, LootType type = LootType.Normal, DifficultyLevel Difficulty = DifficultyLevel.VeryEasy)
-            {
-                this.ItemID = ItemID;
-                ltype = type;
-                this.Difficulty = Difficulty;
-            }
-
-            public enum LootType : byte
-            {
-                Normal,
-                DoubleJump,
-                Flight,
-                Teleport,
-                Waterbreathing,
-                Lavaswimming
             }
         }
     }

@@ -14,6 +14,7 @@ namespace CastleGenerator
         RodOfDiscord,
         Water,
         Lava,
-        Honey
+        Honey,
+        Waterwalking
     }
 }

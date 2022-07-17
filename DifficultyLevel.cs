@@ -8,7 +8,7 @@ namespace CastleGenerator
 {
     public enum DifficultyLevel : byte
     {
-        VeryEasy = 1,
+        VeryEasy = 0,
         Easy,
         Normal,
         Hard,

@@ -37,6 +37,7 @@ namespace CastleGenerator.DB.Zones
             AddRoom(new Corridor06());
             AddRoom(new Corridor07());
             AddRoom(new Room08());
+            AddRoom(new TreasureRoom01());
 
             AddZoneMob(NPCID.Zombie, DifficultyLevel.VeryEasy, 30, 10, 0, 0.15f);
             AddZoneMob(NPCID.Skeleton, DifficultyLevel.Easy, 40, 25, 5, 0.2f);
@@ -45,7 +46,7 @@ namespace CastleGenerator.DB.Zones
             AddZoneMob(NPCID.CaveBat, DifficultyLevel.Easy, 10, 5, 0, 0.05f, "Bat");
             AddZoneMob(NPCID.CorruptBunny, DifficultyLevel.Easy, 50, 30, 6, 0.35f);
             AddZoneMob(NPCID.Mimic, DifficultyLevel.VeryHard, 200, 20, 10, 0.85f);
-            AddZoneMob(NPCID.BoneThrowingSkeleton, DifficultyLevel.Easy, 35, 20, 3, 0.16f);
+            AddZoneMob(NPCID.BoneThrowingSkeleton, DifficultyLevel.Hard, 35, 20, 3, 0.16f);
             AddZoneMob(NPCID.Piranha, DifficultyLevel.VeryEasy, 25, 7, 0, 0.2f, Aquatic: true);
             AddZoneMob(NPCID.PinkJellyfish, DifficultyLevel.Normal, 80, 23, 0, 0.35f, Name: "Jellyfish", Aquatic: true);
             AddZoneMob(NPCID.IcyMerman, DifficultyLevel.Hard, 200, 40, 0, 0.65f, Name: "Merman", Color: Microsoft.Xna.Framework.Color.DarkBlue, Aquatic: true);

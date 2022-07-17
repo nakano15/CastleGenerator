@@ -20,6 +20,7 @@ namespace CastleGenerator
         public Room GetRoom { get { return GetZone.RoomTypes[RoomID]; } }
         public List<MobSlot> Mobs = new List<MobSlot>();
         public List<TreasureSlot> Treasures = new List<TreasureSlot>();
+        public bool Visited = false;
 
         private void FindZone()
         {

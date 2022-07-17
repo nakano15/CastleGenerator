@@ -12,6 +12,7 @@ namespace CastleGenerator
         Spawn,
         SaveRoom,
         BossRoom,
-        Corridor
+        Corridor,
+        Treasure
     }
 }

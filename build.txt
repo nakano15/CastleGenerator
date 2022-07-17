@@ -2,3 +2,4 @@ displayName = Castle Generator
 author = Nakano15
 version = 0.1
 buildIgnore = RoomDesigner/*
+modReferences = SubworldLibrary

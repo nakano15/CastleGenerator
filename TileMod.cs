@@ -8,7 +8,7 @@ namespace CastleGenerator
     {
         public override bool CanKillTile(int i, int j, int type, ref bool blockDamaged)
         {
-            if (!WorldMod.IsCastle)
+            if (WorldMod.IsCastle)
                 return false;
             return base.CanKillTile(i, j, type, ref blockDamaged);
         }

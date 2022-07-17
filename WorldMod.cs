@@ -7,11 +7,13 @@ using Terraria;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using Terraria.World.Generation;
+using Terraria.GameContent.Generation;
 
 namespace CastleGenerator
 {
     public class WorldMod : ModWorld
     {
+        public static bool GenerateCastle = false;
         public static bool IsCastle = false;
         public static List<RoomInfo> Rooms = new List<RoomInfo>();
 
@@ -23,11 +25,12 @@ namespace CastleGenerator
 
         public override void ModifyWorldGenTasks(List<GenPass> tasks, ref float totalWeight)
         {
-            if (true || IsCastle)
+            if (GenerateCastle)
             {
                 while (tasks.Count > 2)
                     tasks.RemoveAt(2);
                 tasks.Add(new Generator.GenerateCastle());
+                GenerateCastle = false;
             }
         }
 

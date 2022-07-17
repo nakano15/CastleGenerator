@@ -19,6 +19,8 @@ namespace CastleGenerator
         private static bool DaytimeBackup = false;
         public static byte ScreenBlackoutTime = 0;
         public const string IsCastleString = "IsCastle";
+        public int PortalBlinkCounter = 0;
+        public static float PortalBlinkValue = 1;
 
         public override object Call(params object[] args)
         {
@@ -59,6 +61,8 @@ namespace CastleGenerator
                 DaytimeBackup = Main.dayTime;
                 Main.dayTime = false;
             }
+            PortalBlinkCounter++;
+            PortalBlinkValue = 1f - (float)System.Math.Sin(PortalBlinkCounter * 0.2f) * 0.2f;
         }
 
         public override void MidUpdateNPCGore()
