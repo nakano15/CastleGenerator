@@ -454,14 +454,15 @@ namespace CastleGenerator.Generator
                 for (int r = 0; r < rooms.Count; r++)
                 {
                     RoomPosition room = rooms[r];
-                    room.Difficulty = MinDifficultyLevel - room.Difficulty * Normalized * MaxDifficultyLevel;
+                    room.Difficulty = MinDifficultyLevel + room.Difficulty * Normalized * (MaxDifficultyLevel - MinDifficultyLevel);
                 }
             }
         }
 
         private void CreateExtraCastleRooms()
         {
-            byte RoomsUntilSavePoint = 15;
+            const byte MaxRoomsTillSavePoint = 8; //15
+            byte RoomsUntilSavePoint = MaxRoomsTillSavePoint;
             int LastMap = rooms.Count;
             for (int i = 0; i < LastMap; i++)
             {
@@ -491,7 +492,7 @@ namespace CastleGenerator.Generator
                                 PossibleRooms.RemoveAt(p);
                                 if(PlaceRoom(NewRoom, roomPos, c, roomPos.Difficulty))
                                 {
-                                    RoomsUntilSavePoint = 15;
+                                    RoomsUntilSavePoint = MaxRoomsTillSavePoint;
                                     break;
                                 }
                             }
@@ -509,7 +510,7 @@ namespace CastleGenerator.Generator
                                 List<Room> PossibleRooms = new List<Room>();
                                 foreach (Room r in zone.RoomTypes)
                                 {
-                                    if (r.roomType != LastType && (RoomsToCreate > 0 ? (r.roomType == RoomType.Normal || r.roomType == RoomType.Corridor || r.roomType == RoomType.Treasure) : (r.roomType == RoomType.Treasure)))
+                                    if (r.roomType != LastType && (RoomsToCreate > 0 ? (r.roomType == RoomType.Normal || r.roomType == RoomType.Corridor || r.roomType == RoomType.Treasure) : (r.roomType == RoomType.Treasure || r.roomType == RoomType.SaveRoom || r.roomType == RoomType.Normal)))
                                     {
                                         if (CanPlaceRoomHere(c, roomPos, r))
                                             PossibleRooms.Add(r);
@@ -532,7 +533,7 @@ namespace CastleGenerator.Generator
                 }
                 if (room.roomType == RoomType.SaveRoom)
                 {
-                    RoomsUntilSavePoint = 15;
+                    RoomsUntilSavePoint = MaxRoomsTillSavePoint;
                 }
                 else if(RoomsUntilSavePoint > 0)
                 {
@@ -705,7 +706,7 @@ namespace CastleGenerator.Generator
                 {
                     SpawnSlots.Add(i);
                 }
-                float DifficultyGrade = 0.5f + room.Difficulty + 0.5f * room.Treasures.Count;
+                float DifficultyGrade = 0.5f + room.Difficulty + 0.2f * room.Treasures.Count;
                 while(SpawnSlots.Count > 0)
                 {
                     int Slot = rand.Next(SpawnSlots.Count);
@@ -773,7 +774,7 @@ namespace CastleGenerator.Generator
                     {
                         List<int> PossibleLoots = new List<int>();
                         int LastLootIndex = 0;
-                        while(LastLootIndex < PossibleLoots.Count)
+                        while(LastLootIndex < loot.Count)
                         {
                             if(roompos.Difficulty >= (int)loot[LastLootIndex].Difficulty)
                             {

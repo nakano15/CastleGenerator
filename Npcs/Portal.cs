@@ -95,7 +95,7 @@ namespace CastleGenerator.Npcs
             if (firstButton)
             {
                 CastleSubworld.ChangeFinalityItem(LootReward);
-                CastleSubworld.ChangeRoomsToGenerate(40, 80);
+                CastleSubworld.ChangeRoomsToGenerate(40, 60);
                 CastleSubworld.ChangeDifficulty(1, 2);
                 PlaceLoots(Main.LocalPlayer);
                 Subworld.Enter<CastleSubworld>();
@@ -104,7 +104,7 @@ namespace CastleGenerator.Npcs
 
         private void PlaceLoots(Player player)
         {
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 25; i++)
             {
                 if (NPC.downedMechBossAny)
                 {
@@ -122,12 +122,12 @@ namespace CastleGenerator.Npcs
                     AddLoot(ItemID.LesserManaPotion);
                 }
             }
-            AddLoot(ItemID.Aglet, difficulty: DifficultyLevel.Easy);
+            AddLoot(ItemID.Aglet, difficulty: DifficultyLevel.VeryEasy);
             AddLoot(ItemID.FrogLeg, difficulty: DifficultyLevel.Easy);
-            AddLoot(ItemID.AnkletoftheWind, difficulty: DifficultyLevel.Easy);
+            AddLoot(ItemID.AnkletoftheWind, difficulty: DifficultyLevel.Normal);
         }
 
-        private void AddLoot(int ItemID, Loot.LootType type = Loot.LootType.Normal, DifficultyLevel difficulty = DifficultyLevel.VeryEasy)
+        private void AddLoot(int ItemID, Loot.LootType type = Loot.LootType.Normal, DifficultyLevel difficulty = DifficultyLevel.Trivial)
         {
             CastleSubworld.AddItem(ItemID, type, difficulty);
         }
@@ -135,7 +135,7 @@ namespace CastleGenerator.Npcs
         public override float SpawnChance(NPCSpawnInfo spawnInfo)
         {
             if (!spawnInfo.water && !SLWorld.subworld && !NPC.AnyNPCs(ModContent.NPCType<Portal>()))
-                return 0.2f;
+                return 1f / 250;
             return 0;
         }
 

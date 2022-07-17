@@ -51,7 +51,7 @@ namespace CastleGenerator
             DifficultyChangeMax = Max;
         }
 
-        public static void AddItem(int ItemID, Loot.LootType type = Loot.LootType.Normal, DifficultyLevel difficulty = DifficultyLevel.VeryEasy)
+        public static void AddItem(int ItemID, Loot.LootType type = Loot.LootType.Normal, DifficultyLevel difficulty = DifficultyLevel.Trivial)
         {
             loots.Add(new Loot(ItemID, type, difficulty));
         }
