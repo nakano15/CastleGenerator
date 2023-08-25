@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SubworldLibrary;
-using Terraria.World.Generation;
 using Terraria.GameContent.Generation;
 using Terraria;
+using Terraria.IO;
+using Terraria.WorldBuilding;
 
 namespace CastleGenerator
 {
@@ -16,13 +17,13 @@ namespace CastleGenerator
 
         private static List<Loot> loots = new List<Loot>();
 
-        public override int width => 1400;
+        public override int Width => 1400;
 
-        public override int height => 1400;
+        public override int Height => 1400;
 
         private Generator.GenerateCastle Castle = new Generator.GenerateCastle();
 
-        public override List<GenPass> tasks
+        public override List<GenPass> Tasks
         {
             get
             {
@@ -56,12 +57,13 @@ namespace CastleGenerator
             loots.Add(new Loot(ItemID, type, difficulty));
         }
 
-        public override bool noWorldUpdate => true;
+        public override bool NormalUpdates => true;
 
-        public override bool saveSubworld => false;
+        public override bool ShouldSave => false;
 
-        public void InitializeCastleWorld(GenerationProgress progress)
+        public void InitializeCastleWorld(GenerationProgress progress, GameConfiguration configuration)
         {
+            progress.Message = "Initializing Castle Generation";
             Castle.InitializeCastle();
             Castle.Finality = FinalityItem;
             Castle.CreateLifeCrystals = false;
@@ -86,7 +88,7 @@ namespace CastleGenerator
             loots = new List<Loot>();
         }
 
-        public void GenerateTerrain(GenerationProgress progress)
+        public void GenerateTerrain(GenerationProgress progress, GameConfiguration configuration)
         {
             Terraria.Utilities.UnifiedRandom genRand = Castle.rand;
             progress.Message = Lang.gen[0].Value;
@@ -218,25 +220,25 @@ namespace CastleGenerator
                 }
                 for (int num703 = 0; (double)num703 < Main.worldSurface; num703++)
                 {
-                    Main.tile[num702, num703].active(active: false);
-                    Main.tile[num702, num703].frameX = -1;
-                    Main.tile[num702, num703].frameY = -1;
+                    Main.tile[num702, num703].HasTile = false;
+                    Main.tile[num702, num703].TileFrameX = -1;
+                    Main.tile[num702, num703].TileFrameY = -1;
                 }
                 for (int num704 = (int)Main.worldSurface; num704 < Main.maxTilesY; num704++)
                 {
                     if ((double)num704 < Main.rockLayer)
                     {
-                        Main.tile[num702, num704].active(active: true);
-                        Main.tile[num702, num704].type = 0;
-                        Main.tile[num702, num704].frameX = -1;
-                        Main.tile[num702, num704].frameY = -1;
+                        Main.tile[num702, num704].HasTile = true;
+                        Main.tile[num702, num704].TileType = 0;
+                        Main.tile[num702, num704].TileFrameX = -1;
+                        Main.tile[num702, num704].TileFrameY = -1;
                     }
                     else
                     {
-                        Main.tile[num702, num704].active(active: true);
-                        Main.tile[num702, num704].type = 1;
-                        Main.tile[num702, num704].frameX = -1;
-                        Main.tile[num702, num704].frameY = -1;
+                        Main.tile[num702, num704].HasTile = true;
+                        Main.tile[num702, num704].TileType = 1;
+                        Main.tile[num702, num704].TileFrameX = -1;
+                        Main.tile[num702, num704].TileFrameY = -1;
                     }
                 }
             }

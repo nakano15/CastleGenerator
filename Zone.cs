@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using Terraria.ModLoader;
+using ReLogic.Content;
 
 namespace CastleGenerator
 {
@@ -21,15 +23,15 @@ namespace CastleGenerator
             if(_ZoneTiles == null)
             {
                 Type myType = this.GetType();
-                string TextureDirectory = myType.Namespace.Replace(".", "/").Replace("CastleGenerator/", "") + "/" + myType.Name;
+                string TextureDirectory = myType.Namespace.Replace(".", "/") + myType.Name;
                 //throw new Exception(TextureDirectory);
-                if (MainMod.mod.TextureExists(TextureDirectory))
+                if (MainMod.mod.HasAsset(TextureDirectory))
                 {
-                    _ZoneTiles = MainMod.mod.GetTexture(TextureDirectory);
+                    _ZoneTiles = ModContent.Request<Texture2D>(TextureDirectory).Value;
                 }
                 else
                 {
-                    _ZoneTiles = Terraria.Main.blackTileTexture;
+                    _ZoneTiles = Terraria.GameContent.TextureAssets.BlackTile.Value;
                 }
             }
             return _ZoneTiles;

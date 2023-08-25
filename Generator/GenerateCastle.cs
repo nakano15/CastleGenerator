@@ -1,11 +1,12 @@
 ﻿using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using Terraria.World.Generation;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Terraria.WorldBuilding;
+using Terraria.IO;
 
 namespace CastleGenerator.Generator
 {
@@ -96,7 +97,7 @@ namespace CastleGenerator.Generator
             return false;
         }
 
-        public override void Apply(GenerationProgress progress)
+        protected override void ApplyPass(GenerationProgress progress, GameConfiguration configuration)
         {
             this.progress = progress;
             WorldMod.IsCastle = true;
@@ -189,7 +190,7 @@ namespace CastleGenerator.Generator
                     SpawnRefPosX += StartingRoom.Width;
                 while (true)
                 {
-                    if (!Main.tile[SpawnRefPosX, RoomPositionY].active())
+                    if (!Main.tile[SpawnRefPosX, RoomPositionY].HasTile)
                         RoomPositionY++;
                     else
                         break;
@@ -1168,10 +1169,9 @@ namespace CastleGenerator.Generator
                                     PosX += BlockDim * (NegativeBlockDim ? -1 : 1);
                                     PosY += dist;
                                 }
-                                Tile tile = Main.tile[PosX, PosY];
-                                tile.active(true);
-                                tile.slope(0);
-                                tile.type = c.BlockTile;
+                                Main.tile[PosX, PosY].HasTile = true;
+                                Main.tile[PosX, PosY].Slope = 0;
+                                Main.tile[PosX, PosY].TileType = c.BlockTile;
                                 WorldGen.TileFrame(PosX, PosY);
                             }
                         }
@@ -1353,9 +1353,8 @@ namespace CastleGenerator.Generator
                 {
                     int TilePosX = rp.Position.X + x, TilePosY = rp.Position.Y + y;
                     Color color = ColorMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y];
-                    Tile tile = Main.tile[TilePosX, TilePosY];
-                    tile.active(false);
-                    tile.wall = 0;
+                    Main.tile[TilePosX, TilePosY].HasTile = false;
+                    Main.tile[TilePosX, TilePosY].WallType = 0;
                     bool FoundTileInfo = false;
                     foreach (TileInfo Ti in rp.room.RoomMapCodes)
                     {
@@ -1444,9 +1443,9 @@ namespace CastleGenerator.Generator
                     {
                         while (true)
                         {
-                            if (!Main.tile[FurnitureX, FurnitureY].active() || Main.tile[FurnitureX, FurnitureY].type != Terraria.ID.TileID.Chairs)
+                            if (!Main.tile[FurnitureX, FurnitureY].HasTile || Main.tile[FurnitureX, FurnitureY].TileType != Terraria.ID.TileID.Chairs)
                                 break;
-                            Main.tile[FurnitureX, FurnitureY].frameX += 18;
+                            Main.tile[FurnitureX, FurnitureY].TileFrameX += 18;
                             FurnitureY--;
                         }
                     }
@@ -1467,22 +1466,21 @@ namespace CastleGenerator.Generator
 
         private void PlaceTile(int X, int Y, TileInfo Ti)
         {
-            Tile tile = Main.tile[X, Y];
-            tile.slope(0);
+            Main.tile[X, Y].Slope = 0;
             if (Ti.Active)
             {
-                tile.active(true);
-                tile.type = Ti.TileID;
-                tile.frameX = Ti.TileX;
-                tile.frameY = Ti.TileY;
+                Main.tile[X, Y].HasTile = true;
+                Main.tile[X, Y].TileType = Ti.TileID;
+                Main.tile[X, Y].TileFrameX = Ti.TileX;
+                Main.tile[X, Y].TileFrameY = Ti.TileY;
             }
             else
             {
-                tile.active(false);
+                Main.tile[X, Y].HasTile = false;
             }
-            tile.wall = Ti.WallID;
-            tile.liquidType(Ti.LiquidID);
-            tile.liquid = Ti.LiquidValue;
+            Main.tile[X, Y].WallType = Ti.WallID;
+            Main.tile[X, Y].LiquidType = Ti.LiquidID;
+            Main.tile[X, Y].LiquidAmount = Ti.LiquidValue;
             //WorldGen.TileFrame(X, Y);
         }
 
@@ -1495,8 +1493,8 @@ namespace CastleGenerator.Generator
             {
                 for (int x = 0; x < Main.maxTilesX; x++)
                 {
-                    Main.tile[x, y].active(true);
-                    Main.tile[x, y].type = Terraria.ID.TileID.StoneSlab;
+                    Main.tile[x, y].HasTile = true;
+                    Main.tile[x, y].TileType = Terraria.ID.TileID.StoneSlab;
                     WorldGen.TileFrame(x, y);
                 }
             }
@@ -1514,7 +1512,7 @@ namespace CastleGenerator.Generator
                         int TileX = SpawnX + x * dir, TileY = SpawnY - y;
                         if (dir == 1 && x == 0)
                             continue;
-                        Main.tile[TileX, TileY].active(false);
+                        Main.tile[TileX, TileY].HasTile = false;
                         WorldGen.TileFrame(TileX, TileY);
                     }
                 }

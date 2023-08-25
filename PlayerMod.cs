@@ -1,14 +1,16 @@
 ﻿using Terraria;
+using Terraria.DataStructures;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using SubworldLibrary;
 
 namespace CastleGenerator
 {
     public class PlayerMod : ModPlayer
     {
-        public override bool CloneNewInstances => false;
+        protected override bool CloneNewInstances => false;
         public RoomInfo MyRoom = null;
         private bool JustSpawned = false;
         public PlayerWorldInfo pwi = new PlayerWorldInfo();
@@ -16,26 +18,26 @@ namespace CastleGenerator
         public override void PreUpdateBuffs()
         {
             if (WorldMod.IsCastle)
-                player.AddBuff(Terraria.ID.BuffID.NoBuilding, 5);
+                Player.AddBuff(Terraria.ID.BuffID.NoBuilding, 5);
         }
 
         public override void ResetEffects()
         {
             if (!WorldMod.IsCastle)
                 return;
-            player.statLifeMax2 = 100 + 20 * pwi.LifeGot.Count;
+            Player.statLifeMax2 = 100 + 20 * pwi.LifeGot.Count;
         }
 
-        public override void OnRespawn(Player player)
+        public override void OnRespawn()
         {
             JustSpawned = true;
         }
 
-        public override void OnEnterWorld(Player player)
+        public override void OnEnterWorld()
         {
             pwi = new PlayerWorldInfo(true);
             JustSpawned = true;
-            if(player.whoAmI == Main.myPlayer && SubworldLibrary.SLWorld.subworld && SubworldLibrary.SLWorld.currentSubworld is CastleSubworld)
+            if(Player.whoAmI == Main.myPlayer && SubworldSystem.IsActive<CastleSubworld>())
             {
                 Main.Map.Clear();
             }
@@ -48,8 +50,8 @@ namespace CastleGenerator
 
         public override void PostUpdate()
         {
-            int TileX = (int)(player.Center.X * (1f / 16));
-            int TileY = (int)(player.Center.Y * (1f / 16));
+            int TileX = (int)(Player.Center.X * (1f / 16));
+            int TileY = (int)(Player.Center.Y * (1f / 16));
             RoomInfo NewRoom = MyRoom;
             foreach(RoomInfo ri in WorldMod.Rooms)
             {
@@ -61,36 +63,36 @@ namespace CastleGenerator
                     break;
                 }
             }
-            if (player.whoAmI == Main.myPlayer && NewRoom != MyRoom)
+            if (Player.whoAmI == Main.myPlayer && NewRoom != MyRoom)
             {
                 //Clean Up stuff from last room, and create stuff for new room.
                 ChangeRoom(NewRoom);
             }
             MyRoom = NewRoom;
-            if (player.whoAmI == Main.myPlayer)
+            if (Player.whoAmI == Main.myPlayer)
             {
                 const float DivisionBy16 = 1f / 16;
-                int MinCheckX = (int)(player.position.X * DivisionBy16), MaxCheckX = (int)((player.position.X + player.width) * DivisionBy16);
-                int MinCheckY = (int)(player.position.Y * DivisionBy16), MaxCheckY = (int)((player.position.Y + player.height) * DivisionBy16);
+                int MinCheckX = (int)(Player.position.X * DivisionBy16), MaxCheckX = (int)((Player.position.X + Player.width) * DivisionBy16);
+                int MinCheckY = (int)(Player.position.Y * DivisionBy16), MaxCheckY = (int)((Player.position.Y + Player.height) * DivisionBy16);
                 for (int y = MinCheckY; y < MaxCheckY; y++)
                 {
                     for (int x = MinCheckX; x < MaxCheckX; x++)
                     {
                         Tile tile = Framing.GetTileSafely(x, y);
-                        if (!tile.active())
+                        if (!tile.HasTile)
                             continue;
-                        if (tile.type == Terraria.ID.TileID.Heart)
+                        if (tile.TileType == Terraria.ID.TileID.Heart)
                         {
                             Point TileBottom = new Point(x, y);
-                            if (tile.frameX == 0)
+                            if (tile.TileFrameX == 0)
                                 TileBottom.X++;
-                            if (tile.frameY * (1f / 18) % 2 == 0)
+                            if (tile.TileFrameY * (1f / 18) % 2 == 0)
                                 TileBottom.Y++;
                             if (!pwi.LifeGot.Contains(TileBottom))
                             {
                                 pwi.LifeGot.Add(TileBottom);
-                                CombatText.NewText(player.getRect(), Color.Green, "Life Max Up", true);
-                                player.statLife = player.statLifeMax2 + 20;
+                                CombatText.NewText(Player.getRect(), Color.Green, "Life Max Up", true);
+                                Player.statLife = Player.statLifeMax2 + 20;
                                 WorldGen.KillTile(x, y, false, false, true);
                             }
                         }
@@ -132,7 +134,7 @@ namespace CastleGenerator
                     MobSpawnPos spawnpos = NewRoom.GetRoom.MobSpawnPosition[mob.Slot];
                     int SpawnX = NewRoom.RoomX + spawnpos.PositionX - NewRoom.GetRoom.RoomTileStartX,
                         SpawnY = NewRoom.RoomY + spawnpos.PositionY - NewRoom.GetRoom.RoomTileStartY;
-                    int NpcSpawnPos = NPC.NewNPC(SpawnX * 16 + 8, SpawnY * 16 + 16, mobdefinition.MobID);
+                    int NpcSpawnPos = NPC.NewNPC(NPC.GetSource_NaturalSpawn(), SpawnX * 16 + 8, SpawnY * 16 + 16, mobdefinition.MobID);
                     if (NpcSpawnPos > -1)
                     {
                         NPC npc = Main.npc[NpcSpawnPos];
@@ -157,7 +159,7 @@ namespace CastleGenerator
                         {
                             for (int x = -1; x < 1; x++)
                             {
-                                Main.tile[x + treasurePosition.X, treasurePosition.Y + y].active(false);
+                                Main.tile[x + treasurePosition.X, treasurePosition.Y + y].HasTile = false;
                             }
                         }
                     }
@@ -170,7 +172,7 @@ namespace CastleGenerator
                 {
                     if (!pwi.TreasuresGot.Contains(treasurePosition))
                     {
-                        ItemsPickupCreated.Add(Item.NewItem(new Vector2(treasurePosition.X * 16, treasurePosition.Y * 16), ItemID, noBroadcast: true, noGrabDelay: true));
+                        ItemsPickupCreated.Add(Item.NewItem(Item.GetSource_NaturalSpawn(), new Vector2(treasurePosition.X * 16, treasurePosition.Y * 16), ItemID, noBroadcast: true, noGrabDelay: true));
                     }
                     /*for (int y = -1; y < 1; y++)
                     {
@@ -235,18 +237,18 @@ namespace CastleGenerator
             }
         }
 
-        public override bool ConsumeAmmo(Item weapon, Item ammo)
+        public override bool CanConsumeAmmo(Item weapon, Item ammo)
         {
             if (WorldMod.IsCastle)
                 return false;
-            return base.ConsumeAmmo(weapon, ammo);
+            return base.CanConsumeAmmo(weapon, ammo);
         }
 
         public override bool PreItemCheck()
         {
             if (!WorldMod.IsCastle)
                 return true;
-            Item item = player.inventory[player.selectedItem];
+            Item item = Player.inventory[Player.selectedItem];
             switch (item.type)
             {
                 case Terraria.ID.ItemID.Dynamite:

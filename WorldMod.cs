@@ -6,24 +6,26 @@ using System.Threading.Tasks;
 using Terraria;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
-using Terraria.World.Generation;
 using Terraria.GameContent.Generation;
+using Terraria.WorldBuilding;
+using Terraria.Graphics;
+using Terraria.UI;
 
 namespace CastleGenerator
 {
-    public class WorldMod : ModWorld
+    public class WorldMod : ModSystem
     {
         public static bool GenerateCastle = false;
         public static bool IsCastle = false;
         public static List<RoomInfo> Rooms = new List<RoomInfo>();
 
-        public override void Initialize()
+        public override void OnWorldLoad()/* tModPorter Suggestion: Also override OnWorldUnload, and mirror your worldgen-sensitive data initialization in PreWorldGen */
         {
             IsCastle = false;
             Rooms.Clear();
         }
 
-        public override void ModifyWorldGenTasks(List<GenPass> tasks, ref float totalWeight)
+        public override void ModifyWorldGenTasks(List<GenPass> tasks, ref double totalWeight)
         {
             if (GenerateCastle)
             {
@@ -34,17 +36,15 @@ namespace CastleGenerator
             }
         }
 
-        public override TagCompound Save()
+        public override void SaveWorldData(TagCompound tag)/* tModPorter Suggestion: Edit tag parameter instead of returning new TagCompound */
         {
-            TagCompound tag = new TagCompound();
             tag.Add("ModVersion", MainMod.ModVersion);
             tag.Add("IsCastle", IsCastle); //Room Infos needs to be saved too. Their zones must be saved by name.
             if (IsCastle)
                 RoomInfo.Save(tag);
-            return tag;
         }
 
-        public override void Load(TagCompound tag)
+        public override void LoadWorldData(TagCompound tag)
         {
             int Version = tag.GetInt("ModVersion");
             IsCastle = tag.GetBool("IsCastle");
@@ -52,6 +52,30 @@ namespace CastleGenerator
             {
                 RoomInfo.Load(tag, Version);
             }
+        }
+
+        public override void ModifyTransformMatrix(ref SpriteViewMatrix Transform)
+        {
+            if (WorldMod.IsCastle)
+            {
+                Transform.Zoom *= MainMod.Zoom;
+            }
+        }
+
+        public override void PostUpdatePlayers()
+        {
+            MainMod.PostUpdatePlayerScripts();
+        }
+
+        public override void PostUpdateNPCs()
+        {
+            MainMod.PostUpdateNpcScript();
+        }
+
+        public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
+        {
+            if(WorldMod.IsCastle)
+                layers.Insert(0, MainMod.MapBordersInterfaceLayer);
         }
     }
 }

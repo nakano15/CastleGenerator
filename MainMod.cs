@@ -1,3 +1,4 @@
+using Terraria.GameContent;
 using Terraria.ModLoader;
 using System.Collections.Generic;
 using Terraria.Graphics;
@@ -19,7 +20,7 @@ namespace CastleGenerator
         private static bool DaytimeBackup = false;
         public static byte ScreenBlackoutTime = 0;
         public const string IsCastleString = "IsCastle";
-        public int PortalBlinkCounter = 0;
+        private static int PortalBlinkCounter = 0;
         public static float PortalBlinkValue = 1;
 
         public override object Call(params object[] args)
@@ -46,15 +47,7 @@ namespace CastleGenerator
             }
         }
 
-        public override void ModifyTransformMatrix(ref SpriteViewMatrix Transform)
-        {
-            if (WorldMod.IsCastle)
-            {
-                Transform.Zoom *= Zoom;
-            }
-        }
-
-        public override void MidUpdatePlayerNPC()
+        internal static void PostUpdatePlayerScripts() /* tModPorter Note: Removed. Use ModSystem.PostUpdatePlayers or ModSystem.PreUpdateNPCs */
         {
             if (WorldMod.IsCastle)
             {
@@ -65,16 +58,10 @@ namespace CastleGenerator
             PortalBlinkValue = 1f - (float)System.Math.Sin(PortalBlinkCounter * 0.2f) * 0.2f;
         }
 
-        public override void MidUpdateNPCGore()
+        public static void PostUpdateNpcScript()
         {
             if (WorldMod.IsCastle)
                 Main.dayTime = DaytimeBackup;
-        }
-
-        public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
-        {
-            if(WorldMod.IsCastle)
-                layers.Insert(0, MapBordersInterfaceLayer);
         }
 
         private static bool DrawMapBorders()
@@ -86,7 +73,7 @@ namespace CastleGenerator
             {
                 if (ScreenBlackoutTime > 0)
                     ScreenBlackoutTime--;
-                Main.spriteBatch.Draw(Main.blackTileTexture, new Rectangle(0, 0, Main.screenWidth, Main.screenHeight), Color.Black);
+                Main.spriteBatch.Draw(TextureAssets.BlackTile.Value, new Rectangle(0, 0, Main.screenWidth, Main.screenHeight), Color.Black);
                 return true;
             }
             int LeftEdgeWidth = (int)(System.Math.Floor(ri.RoomX * 16 - Main.screenPosition.X));
@@ -95,19 +82,19 @@ namespace CastleGenerator
             int BottomEdgeHeight = (int)(Main.screenPosition.Y + Main.screenHeight - (ri.RoomY + ri.GetRoom.Height) * 16);
             if (LeftEdgeWidth > 0)
             {
-                Main.spriteBatch.Draw(Main.blackTileTexture, new Rectangle(0, 0, LeftEdgeWidth, Main.screenHeight), Color.Black);
+                Main.spriteBatch.Draw(TextureAssets.BlackTile.Value, new Rectangle(0, 0, LeftEdgeWidth, Main.screenHeight), Color.Black);
             }
             if (TopEdgeHeight > 0)
             {
-                Main.spriteBatch.Draw(Main.blackTileTexture, new Rectangle(0, 0, Main.screenWidth, TopEdgeHeight), Color.Black);
+                Main.spriteBatch.Draw(TextureAssets.BlackTile.Value, new Rectangle(0, 0, Main.screenWidth, TopEdgeHeight), Color.Black);
             }
             if (RightEdgeWidth > 0)
             {
-                Main.spriteBatch.Draw(Main.blackTileTexture, new Rectangle(Main.screenWidth - RightEdgeWidth, 0, RightEdgeWidth, Main.screenHeight), Color.Black);
+                Main.spriteBatch.Draw(TextureAssets.BlackTile.Value, new Rectangle(Main.screenWidth - RightEdgeWidth, 0, RightEdgeWidth, Main.screenHeight), Color.Black);
             }
             if (BottomEdgeHeight > 0)
             {
-                Main.spriteBatch.Draw(Main.blackTileTexture, new Rectangle(0, Main.screenHeight - BottomEdgeHeight, Main.screenWidth, BottomEdgeHeight), Color.Black);
+                Main.spriteBatch.Draw(TextureAssets.BlackTile.Value, new Rectangle(0, Main.screenHeight - BottomEdgeHeight, Main.screenWidth, BottomEdgeHeight), Color.Black);
             }
             //Utils.DrawBorderStringFourWay(Main.spriteBatch, Main.fontMouseText, "Top Edge: " + TopEdgeHeight + "\nBottom Edge: " + BottomEdgeHeight + "\nLeft Edge: " + LeftEdgeWidth + "\nRight Edge: " + RightEdgeWidth, Main.screenPosition.X, Main.screenPosition.Y, Color.White, Color.Black, Vector2.Zero);
             return true;

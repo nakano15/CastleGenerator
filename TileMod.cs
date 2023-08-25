@@ -26,20 +26,20 @@ namespace CastleGenerator
             if(type == Terraria.ID.TileID.Containers || type == Terraria.ID.TileID.Containers2)
             {
                 Tile tile = Main.tile[i, j];
-                if(tile.frameY < 36)
+                if(tile.TileFrameY < 36)
                 {
                     PlayerMod player = Main.LocalPlayer.GetModPlayer<PlayerMod>();
                     Point TileBottom = new Point(i, j);
-                    if (tile.frameX % (1f / 18) == 0)
+                    if (tile.TileFrameX % (1f / 18) == 0)
                         TileBottom.X++;
-                    if (tile.frameY % (1f / 18) == 0)
+                    if (tile.TileFrameY % (1f / 18) == 0)
                         TileBottom.Y++;
                     if (!player.pwi.TreasuresGot.Contains(TileBottom))
                     {
                         bool HasInventorySpace = false;
                         for(int e = 0; e < 50; e++)
                         {
-                            if(player.player.inventory[e].type == 0)
+                            if(player.Player.inventory[e].type == 0)
                             {
                                 HasInventorySpace = true;
                                 break;
@@ -47,7 +47,7 @@ namespace CastleGenerator
                         }
                         if (!HasInventorySpace)
                         {
-                            CombatText.NewText(player.player.getRect(), Color.Red, "Inventory is full!");
+                            CombatText.NewText(player.Player.getRect(), Color.Red, "Inventory is full!");
                         }
                         else
                         {
@@ -60,7 +60,7 @@ namespace CastleGenerator
                                 int TreasureY = room.RoomY + baseRoom.TreasureSpawnPosition[treasure.Slot].PositionY - baseRoom.RoomTileStartY;
                                 if (TreasureX == TileBottom.X && TreasureY == TileBottom.Y)
                                 {
-                                    Item.NewItem(player.player.Center, treasure.ItemID);
+                                    Item.NewItem(Item.GetSource_NaturalSpawn(), player.Player.Center, treasure.ItemID);
                                     break;
                                 }
                             }

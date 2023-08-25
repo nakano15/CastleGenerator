@@ -11,7 +11,7 @@ namespace CastleGenerator
     public class NpcMod : GlobalNPC
     {
         public override bool InstancePerEntity => true;
-        public override bool CloneNewInstances => false;
+        protected override bool CloneNewInstances => false;
 
         public override void EditSpawnPool(IDictionary<int, float> pool, NPCSpawnInfo spawnInfo)
         {
@@ -20,7 +20,7 @@ namespace CastleGenerator
             pool.Clear();
         }
 
-        public override bool PreNPCLoot(NPC npc)
+        public override bool PreKill(NPC npc)
         {
             if (!WorldMod.IsCastle)
                 return true;
@@ -50,11 +50,11 @@ namespace CastleGenerator
                 }
                 if (s > 0)
                 {
-                    Item.NewItem(npc.getRect(), Terraria.ID.ItemID.SilverCoin, s);
+                    Item.NewItem(npc.GetSource_Loot(), npc.getRect(), Terraria.ID.ItemID.SilverCoin, s);
                 }
                 if (c > 0)
                 {
-                    Item.NewItem(npc.getRect(), Terraria.ID.ItemID.CopperCoin, c);
+                    Item.NewItem(npc.GetSource_Loot(), npc.getRect(), Terraria.ID.ItemID.CopperCoin, c);
                 }
             }
             return false;

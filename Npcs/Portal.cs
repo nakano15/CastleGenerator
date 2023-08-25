@@ -19,18 +19,18 @@ namespace CastleGenerator.Npcs
 
         public override void SetStaticDefaults()
         {
-            DisplayName.SetDefault("Portal");
+            // DisplayName.SetDefault("Portal");
         }
 
         public override void SetDefaults()
         {
-            npc.width = 32;
-            npc.height = 48;
-            npc.damage = npc.defense = 0;
-            npc.lifeMax = 100;
-            npc.dontTakeDamage = npc.dontTakeDamageFromHostiles = true;
-            npc.friendly = true;
-            npc.lavaImmune = true;
+            NPC.width = 32;
+            NPC.height = 48;
+            NPC.damage = NPC.defense = 0;
+            NPC.lifeMax = 100;
+            NPC.dontTakeDamage = NPC.dontTakeDamageFromHostiles = true;
+            NPC.friendly = true;
+            NPC.lavaImmune = true;
             {
                 Color newcolor = Color.White;
                 switch (Main.rand.Next(3))
@@ -49,7 +49,7 @@ namespace CastleGenerator.Npcs
                 color.Y = (float)newcolor.G / 255;
                 color.Z = (float)newcolor.B / 255;
             }
-            npc.scale = 2;
+            NPC.scale = 2;
             PickFinalityLoot();
         }
 
@@ -90,7 +90,7 @@ namespace CastleGenerator.Npcs
             button = "Enter";
         }
 
-        public override void OnChatButtonClicked(bool firstButton, ref bool shop)
+        public override void OnChatButtonClicked(bool firstButton, ref string shopName)
         {
             if (firstButton)
             {
@@ -98,7 +98,7 @@ namespace CastleGenerator.Npcs
                 CastleSubworld.ChangeRoomsToGenerate(40, 60);
                 CastleSubworld.ChangeDifficulty(1, 2);
                 PlaceLoots(Main.LocalPlayer);
-                Subworld.Enter<CastleSubworld>();
+                SubworldSystem.Enter<CastleSubworld>();
             }
         }
 
@@ -134,7 +134,7 @@ namespace CastleGenerator.Npcs
 
         public override float SpawnChance(NPCSpawnInfo spawnInfo)
         {
-            if (!spawnInfo.water && !SLWorld.subworld && !NPC.AnyNPCs(ModContent.NPCType<Portal>()))
+            if (!spawnInfo.Water && !SubworldSystem.AnyActive() && !NPC.AnyNPCs(ModContent.NPCType<Portal>()))
                 return 1f / 250;
             return 0;
         }
@@ -142,7 +142,7 @@ namespace CastleGenerator.Npcs
         public override void DrawEffects(ref Color drawColor)
         {
             drawColor = new Color(color * MainMod.PortalBlinkValue);
-            Lighting.AddLight(npc.Center, color * 1.5f * npc.scale);
+            Lighting.AddLight(NPC.Center, color * 1.5f * NPC.scale);
         }
     }
 }
