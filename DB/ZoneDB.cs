@@ -17,6 +17,7 @@ namespace CastleGenerator.DB
         public static void AddZone(Zone zone)
         {
             zone.ID = MainMod.ZoneTypes.Count;
+            zone.LoadTexture();
             MainMod.ZoneTypes.Add(zone);
         }
     }

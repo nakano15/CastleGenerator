@@ -8,7 +8,7 @@ namespace CastleGenerator
     public class PlayerWorldInfo
     {
         public string WorldIDString = "";
-        public List<Point> LifeGot = new List<Point>(), TreasuresGot = new List<Point>();
+        public List<Point> LifeGot = new List<Point>(), ManaGot = new List<Point>(), TreasuresGot = new List<Point>();
 
         public PlayerWorldInfo(bool OnEnterWorld = false)
         {
@@ -40,6 +40,12 @@ namespace CastleGenerator
                     writer.Write(MainMod.ModVersion);
                     writer.Write(LifeGot.Count);
                     foreach (Point p in LifeGot)
+                    {
+                        writer.Write(p.X);
+                        writer.Write(p.Y);
+                    }
+                    writer.Write(ManaGot.Count);
+                    foreach (Point p in ManaGot)
                     {
                         writer.Write(p.X);
                         writer.Write(p.Y);

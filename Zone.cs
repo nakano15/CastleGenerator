@@ -18,9 +18,24 @@ namespace CastleGenerator
         public List<ZoneMobDefinition> ZoneMobs = new List<ZoneMobDefinition>();
         public List<TileInfo> ZoneTileInfoCodes = new List<TileInfo>();
 
+        public void LoadTexture()
+        {
+            Type myType = this.GetType();
+            string TextureDirectory = myType.Namespace.Replace(".", "/") + myType.Name;
+            //throw new Exception(TextureDirectory);
+            if (MainMod.mod.HasAsset(TextureDirectory))
+            {
+                _ZoneTiles = ModContent.Request<Texture2D>(TextureDirectory).Value;
+            }
+            else
+            {
+                _ZoneTiles = Terraria.GameContent.TextureAssets.BlackTile.Value;
+            }
+        }
+
         private Texture2D GetTexture()
         {
-            if(_ZoneTiles == null)
+            /*if(_ZoneTiles == null)
             {
                 Type myType = this.GetType();
                 string TextureDirectory = myType.Namespace.Replace(".", "/") + myType.Name;
@@ -33,7 +48,7 @@ namespace CastleGenerator
                 {
                     _ZoneTiles = Terraria.GameContent.TextureAssets.BlackTile.Value;
                 }
-            }
+            }*/
             return _ZoneTiles;
         }
 
@@ -58,7 +73,9 @@ namespace CastleGenerator
 
         public static Zone CreateInvalidZone()
         {
-            return new Zone() { InvalidZone = true };
+            Zone z = new Zone(){ InvalidZone = true, ID = -1 };
+            z.LoadTexture();
+            return z;
         }
 
         public void AddRoom(Room r)

@@ -1169,9 +1169,10 @@ namespace CastleGenerator.Generator
                                     PosX += BlockDim * (NegativeBlockDim ? -1 : 1);
                                     PosY += dist;
                                 }
-                                Main.tile[PosX, PosY].HasTile = true;
+                                WorldGen.PlaceTile(PosX, PosY, c.BlockTile);
+                                /*Main.tile[PosX, PosY].HasTile = true;
                                 Main.tile[PosX, PosY].Slope = 0;
-                                Main.tile[PosX, PosY].TileType = c.BlockTile;
+                                Main.tile[PosX, PosY].TileType = c.BlockTile;*/
                                 WorldGen.TileFrame(PosX, PosY);
                             }
                         }
@@ -1353,7 +1354,8 @@ namespace CastleGenerator.Generator
                 {
                     int TilePosX = rp.Position.X + x, TilePosY = rp.Position.Y + y;
                     Color color = ColorMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y];
-                    Main.tile[TilePosX, TilePosY].HasTile = false;
+                    //Main.tile[TilePosX, TilePosY].HasTile = false;
+                    WorldGen.KillTile(TilePosX, TilePosY, noItem: true);
                     Main.tile[TilePosX, TilePosY].WallType = 0;
                     bool FoundTileInfo = false;
                     foreach (TileInfo Ti in rp.room.RoomMapCodes)
@@ -1466,21 +1468,24 @@ namespace CastleGenerator.Generator
 
         private void PlaceTile(int X, int Y, TileInfo Ti)
         {
-            Main.tile[X, Y].Slope = 0;
+            //Main.tile[X, Y].Slope = 0;
             if (Ti.Active)
             {
-                Main.tile[X, Y].HasTile = true;
-                Main.tile[X, Y].TileType = Ti.TileID;
+                //Main.tile[X, Y].HasTile = true;
+                WorldGen.PlaceTile(X, Y, Ti.TileID);
+                //Main.tile[X, Y].TileType = Ti.TileID;
                 Main.tile[X, Y].TileFrameX = Ti.TileX;
                 Main.tile[X, Y].TileFrameY = Ti.TileY;
             }
             else
             {
-                Main.tile[X, Y].HasTile = false;
+                WorldGen.KillTile(X, Y, noItem: true);
+                //Main.tile[X, Y].HasTile = false;
             }
             Main.tile[X, Y].WallType = Ti.WallID;
-            Main.tile[X, Y].LiquidType = Ti.LiquidID;
-            Main.tile[X, Y].LiquidAmount = Ti.LiquidValue;
+            WorldGen.PlaceLiquid(X, Y, Ti.LiquidID, Ti.LiquidValue);
+            //Main.tile[X, Y].LiquidType = Ti.LiquidID;
+            //Main.tile[X, Y].LiquidAmount = Ti.LiquidValue;
             //WorldGen.TileFrame(X, Y);
         }
 
@@ -1493,8 +1498,9 @@ namespace CastleGenerator.Generator
             {
                 for (int x = 0; x < Main.maxTilesX; x++)
                 {
-                    Main.tile[x, y].HasTile = true;
-                    Main.tile[x, y].TileType = Terraria.ID.TileID.StoneSlab;
+                    WorldGen.PlaceTile(x, y, Terraria.ID.TileID.StoneSlab);
+                    //Main.tile[x, y].HasTile = true;
+                    //Main.tile[x, y].TileType = Terraria.ID.TileID.StoneSlab;
                     WorldGen.TileFrame(x, y);
                 }
             }
@@ -1512,7 +1518,8 @@ namespace CastleGenerator.Generator
                         int TileX = SpawnX + x * dir, TileY = SpawnY - y;
                         if (dir == 1 && x == 0)
                             continue;
-                        Main.tile[TileX, TileY].HasTile = false;
+                        WorldGen.KillTile(TileX, TileY, noItem: true);
+                        //Main.tile[TileX, TileY].HasTile = false;
                         WorldGen.TileFrame(TileX, TileY);
                     }
                 }

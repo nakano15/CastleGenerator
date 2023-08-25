@@ -14,6 +14,7 @@ namespace CastleGenerator
         public RoomInfo MyRoom = null;
         private bool JustSpawned = false;
         public PlayerWorldInfo pwi = new PlayerWorldInfo();
+        const int HealthIncreasePerLevel = 5, ManaIncreasePerLevel = 5;
 
         public override void PreUpdateBuffs()
         {
@@ -25,7 +26,7 @@ namespace CastleGenerator
         {
             if (!WorldMod.IsCastle)
                 return;
-            Player.statLifeMax2 = 100 + 20 * pwi.LifeGot.Count;
+            Player.statLifeMax2 = 100 + HealthIncreasePerLevel * pwi.LifeGot.Count;
         }
 
         public override void OnRespawn()
@@ -81,20 +82,40 @@ namespace CastleGenerator
                         Tile tile = Framing.GetTileSafely(x, y);
                         if (!tile.HasTile)
                             continue;
-                        if (tile.TileType == Terraria.ID.TileID.Heart)
+                        switch(tile.TileType)
                         {
-                            Point TileBottom = new Point(x, y);
-                            if (tile.TileFrameX == 0)
-                                TileBottom.X++;
-                            if (tile.TileFrameY * (1f / 18) % 2 == 0)
-                                TileBottom.Y++;
-                            if (!pwi.LifeGot.Contains(TileBottom))
-                            {
-                                pwi.LifeGot.Add(TileBottom);
-                                CombatText.NewText(Player.getRect(), Color.Green, "Life Max Up", true);
-                                Player.statLife = Player.statLifeMax2 + 20;
-                                WorldGen.KillTile(x, y, false, false, true);
-                            }
+                            case Terraria.ID.TileID.Heart:
+                                {
+                                    Point TileBottom = new Point(x, y);
+                                    if (tile.TileFrameX == 0)
+                                        TileBottom.X++;
+                                    if (tile.TileFrameY * (1f / 18) % 2 == 0)
+                                        TileBottom.Y++;
+                                    if (!pwi.LifeGot.Contains(TileBottom))
+                                    {
+                                        pwi.LifeGot.Add(TileBottom);
+                                        CombatText.NewText(Player.getRect(), Color.Green, "Life Max Up", true);
+                                        Player.UseHealthMaxIncreasingItem(HealthIncreasePerLevel);// Player.statLifeMax2 + 20;
+                                        WorldGen.KillTile(x, y, false, false, true);
+                                    }
+                                }
+                                break;
+                            case Terraria.ID.TileID.ManaCrystal:
+                                {
+                                    Point TileBottom = new Point(x, y);
+                                    if (tile.TileFrameX == 0)
+                                        TileBottom.X++;
+                                    if (tile.TileFrameY * (1f / 18) % 2 == 0)
+                                        TileBottom.Y++;
+                                    if (!pwi.LifeGot.Contains(TileBottom))
+                                    {
+                                        pwi.LifeGot.Add(TileBottom);
+                                        CombatText.NewText(Player.getRect(), Color.Blue, "Mana Max Up", true);
+                                        Player.UseManaMaxIncreasingItem(ManaIncreasePerLevel); //Player.statLife = Player.statLifeMax2 + 20;
+                                        WorldGen.KillTile(x, y, false, false, true);
+                                    }
+                                }
+                                break;
                         }
                     }
                 }
@@ -159,13 +180,32 @@ namespace CastleGenerator
                         {
                             for (int x = -1; x < 1; x++)
                             {
-                                Main.tile[x + treasurePosition.X, treasurePosition.Y + y].HasTile = false;
+                                WorldGen.KillTile(x + treasurePosition.X, treasurePosition.Y + y);
+                                //Main.tile[x + treasurePosition.X, treasurePosition.Y + y].HasTile = false;
                             }
                         }
                     }
                     else
                     {
                         WorldGen.Place2x2(treasurePosition.X, treasurePosition.Y, Terraria.ID.TileID.Heart, 0);
+                    }
+                }
+                else if (ItemID == Terraria.ID.ItemID.ManaCrystal)
+                {
+                    if (pwi.LifeGot.Contains(treasurePosition))
+                    {
+                        for (int y = -1; y < 1; y++)
+                        {
+                            for (int x = -1; x < 1; x++)
+                            {
+                                WorldGen.KillTile(x + treasurePosition.X, treasurePosition.Y + y);
+                                //Main.tile[x + treasurePosition.X, treasurePosition.Y + y].HasTile = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        WorldGen.Place2x2(treasurePosition.X, treasurePosition.Y, Terraria.ID.TileID.ManaCrystal, 0);
                     }
                 }
                 else

@@ -8,11 +8,13 @@ using Terraria.GameContent.Generation;
 using Terraria;
 using Terraria.IO;
 using Terraria.WorldBuilding;
+using Terraria.Localization;
 
 namespace CastleGenerator
 {
     public class CastleSubworld : Subworld
     {
+        public override string Name => "randomcastle";
         private static int FinalityItem = 0, RoomsToGenerateMin = -1, RoomsToGenerateMax = -1, DifficultyChangeMin = -1, DifficultyChangeMax = -1;
 
         private static List<Loot> loots = new List<Loot>();
@@ -57,7 +59,7 @@ namespace CastleGenerator
             loots.Add(new Loot(ItemID, type, difficulty));
         }
 
-        public override bool NormalUpdates => true;
+        public override bool NormalUpdates => false;
 
         public override bool ShouldSave => false;
 
@@ -220,25 +222,28 @@ namespace CastleGenerator
                 }
                 for (int num703 = 0; (double)num703 < Main.worldSurface; num703++)
                 {
-                    Main.tile[num702, num703].HasTile = false;
-                    Main.tile[num702, num703].TileFrameX = -1;
-                    Main.tile[num702, num703].TileFrameY = -1;
+                    WorldGen.KillTile(num702, num703, false, false, true);
+                    //Main.tile[num702, num703].HasTile = false;
+                    //Main.tile[num702, num703].TileFrameX = -1;
+                    //Main.tile[num702, num703].TileFrameY = -1;
                 }
                 for (int num704 = (int)Main.worldSurface; num704 < Main.maxTilesY; num704++)
                 {
                     if ((double)num704 < Main.rockLayer)
                     {
-                        Main.tile[num702, num704].HasTile = true;
+                        WorldGen.PlaceTile(num702, num704, 0);
+                        /*Main.tile[num702, num704].HasTile = true;
                         Main.tile[num702, num704].TileType = 0;
                         Main.tile[num702, num704].TileFrameX = -1;
-                        Main.tile[num702, num704].TileFrameY = -1;
+                        Main.tile[num702, num704].TileFrameY = -1;*/
                     }
                     else
                     {
-                        Main.tile[num702, num704].HasTile = true;
+                        WorldGen.PlaceTile(num702, num704, 1);
+                        /*Main.tile[num702, num704].HasTile = true;
                         Main.tile[num702, num704].TileType = 1;
                         Main.tile[num702, num704].TileFrameX = -1;
-                        Main.tile[num702, num704].TileFrameY = -1;
+                        Main.tile[num702, num704].TileFrameY = -1;*/
                     }
                 }
             }
