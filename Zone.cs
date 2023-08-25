@@ -14,61 +14,42 @@ namespace CastleGenerator
         private bool InvalidZone = false;
         public List<Room> RoomTypes = new List<Room>();
         public bool IsInvalid { get { return InvalidZone; } }
-        private Texture2D _ZoneTiles = null;
         public List<ZoneMobDefinition> ZoneMobs = new List<ZoneMobDefinition>();
         public List<TileInfo> ZoneTileInfoCodes = new List<TileInfo>();
+        public Color[,] ColorMap = new Color[0, 0];
 
         public void LoadTexture()
         {
             Type myType = this.GetType();
-            string TextureDirectory = myType.Namespace.Replace(".", "/") + myType.Name;
+            string TextureDirectory = myType.Namespace.Replace(".", "/") + "/" + myType.Name;
             //throw new Exception(TextureDirectory);
-            if (MainMod.mod.HasAsset(TextureDirectory))
+            Texture2D ZoneMapTexture = null;
+            if (ModContent.HasAsset(TextureDirectory))
             {
-                _ZoneTiles = ModContent.Request<Texture2D>(TextureDirectory).Value;
+                ZoneMapTexture = ModContent.Request<Texture2D>(TextureDirectory).Value;
             }
             else
             {
-                _ZoneTiles = Terraria.GameContent.TextureAssets.BlackTile.Value;
+                if (myType.Name != "Zone")throw new Exception("Couldn't find " + TextureDirectory);
+                ZoneMapTexture = Terraria.GameContent.TextureAssets.BlackTile.Value;
             }
-        }
-
-        private Texture2D GetTexture()
-        {
-            /*if(_ZoneTiles == null)
+            ColorMap = new Color[ZoneMapTexture.Width, ZoneMapTexture.Height];
+            Color[] Color1D = new Color[ZoneMapTexture.Width * ZoneMapTexture.Height];
+            ZoneMapTexture.GetData<Color>(Color1D);
+            for (int y = 0; y < ZoneMapTexture.Height; y++)
             {
-                Type myType = this.GetType();
-                string TextureDirectory = myType.Namespace.Replace(".", "/") + myType.Name;
-                //throw new Exception(TextureDirectory);
-                if (MainMod.mod.HasAsset(TextureDirectory))
+                for (int x = 0; x < ZoneMapTexture.Width; x++)
                 {
-                    _ZoneTiles = ModContent.Request<Texture2D>(TextureDirectory).Value;
+                    ColorMap[x, y] = Color1D[x + (y * ZoneMapTexture.Width)];
                 }
-                else
-                {
-                    _ZoneTiles = Terraria.GameContent.TextureAssets.BlackTile.Value;
-                }
-            }*/
-            return _ZoneTiles;
+            }
+            ColorMap = null;
+            ZoneMapTexture = null;
         }
 
         public Color[,] GetColorMap()
         {
-            Color[,] colorMap = new Color[0, 0];
-            Texture2D mapTexture = GetTexture();
-            {
-                Color[] color1D = new Color[mapTexture.Width * mapTexture.Height];
-                mapTexture.GetData(color1D);
-                colorMap = new Color[mapTexture.Width, mapTexture.Height];
-                for (int x = 0; x < mapTexture.Width; x++)
-                {
-                    for (int y = 0; y < mapTexture.Height; y++)
-                    {
-                        colorMap[x, y] = color1D[x + y * mapTexture.Width];
-                    }
-                }
-            }
-            return colorMap;
+            return ColorMap;
         }
 
         public static Zone CreateInvalidZone()
