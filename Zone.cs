@@ -55,7 +55,6 @@ namespace CastleGenerator
         public static Zone CreateInvalidZone()
         {
             Zone z = new Zone(){ InvalidZone = true, ID = -1 };
-            z.LoadTexture();
             return z;
         }
 

@@ -77,5 +77,13 @@ namespace CastleGenerator
             if(WorldMod.IsCastle)
                 layers.Insert(0, MainMod.MapBordersInterfaceLayer);
         }
+
+        public override void PreWorldGen()
+        {
+            /*foreach (Zone z in MainMod.ZoneTypes)
+            {
+                z.LoadTexture();
+            }*/
+        }
     }
 }
