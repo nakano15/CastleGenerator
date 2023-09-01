@@ -1,9 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Terraria.ModLoader;
 using ReLogic.Content;
+using Terraria;
 
 namespace CastleGenerator
 {
@@ -17,10 +19,28 @@ namespace CastleGenerator
         public List<ZoneMobDefinition> ZoneMobs = new List<ZoneMobDefinition>();
         public List<TileInfo> ZoneTileInfoCodes = new List<TileInfo>();
         public Color[,] ColorMap = new Color[0, 0];
+        public Tile[,] ZoneTileMap = new Tile[0, 0];
+
+        public void LoadZoneTiles()
+        {
+            Type myType = this.GetType(); //How to load the tile infos?
+            string TilesetDirectory = myType.Namespace.Replace(".", "/") + "/" + myType.Name + ".tiles";
+            bool Found;
+            if ((Found = ModContent.HasAsset(TilesetDirectory)))
+            {
+                using (Stream stream = ModContent.OpenRead(TilesetDirectory))
+                {
+                    TilesetPacker p = new TilesetPacker();
+                    p.Load(stream);
+                    TilesetPacker.UnpackWorld(p, out ZoneTileMap);
+                }
+            }
+            throw new Exception("Found ? " + Found + "  Directory: " + TilesetDirectory);
+        }
 
         public void LoadTexture()
         {
-            Type myType = this.GetType();
+            /*Type myType = this.GetType();
             string TextureDirectory = myType.Namespace.Replace(".", "/") + "/" + myType.Name;
             //throw new Exception(TextureDirectory);
             Texture2D ZoneMapTexture = null;
@@ -44,12 +64,12 @@ namespace CastleGenerator
                 }
             }
             ColorMap = null;
-            ZoneMapTexture = null;
+            ZoneMapTexture = null;*/
         }
 
-        public Color[,] GetColorMap()
+        public Tile[,] GetTilesetMap()
         {
-            return ColorMap;
+            return ZoneTileMap;
         }
 
         public static Zone CreateInvalidZone()

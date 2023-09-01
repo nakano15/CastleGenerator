@@ -1346,16 +1346,18 @@ namespace CastleGenerator.Generator
 
         private void SpawnRoom(RoomPosition rp)
         {
-            Color[,] ColorMap = rp.room.ParentZone.GetColorMap();
+            Tile[,] TileMap = rp.room.ParentZone.GetTilesetMap();
             Zone zone = rp.room.ParentZone;
+            throw new Exception("Tile map size: " + TileMap.GetLength(0) + " ~ " + TileMap.GetLength(1));
             for (int y = 0; y < rp.room.Height; y++)
             {
                 for (int x = 0; x < rp.room.Width; x++)
                 {
                     int TilePosX = rp.Position.X + x, TilePosY = rp.Position.Y + y;
-                    Color color = ColorMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y];
+                    Main.tile[TilePosX, TilePosY].CopyFrom(TileMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y]);
+                    //Color color = ColorMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y];
                     //Main.tile[TilePosX, TilePosY].HasTile = false;
-                    WorldGen.KillTile(TilePosX, TilePosY, noItem: true);
+                    /*WorldGen.KillTile(TilePosX, TilePosY, noItem: true);
                     Main.tile[TilePosX, TilePosY].WallType = 0;
                     bool FoundTileInfo = false;
                     foreach (TileInfo Ti in rp.room.RoomMapCodes)
@@ -1378,7 +1380,7 @@ namespace CastleGenerator.Generator
                                 break;
                             }
                         }
-                    }
+                    }*/
                 }
             }
             foreach (FurnitureSpawnPos furniture in rp.room.FurnitureSpawnPosition)

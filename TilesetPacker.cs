@@ -37,10 +37,10 @@ namespace CastleGenerator
             return pack;
         }
 
-        public static void UnpackWorld(TilesetPacker Package, out int Width, out int Height, out Tile[,] Tiles)
+        public static void UnpackWorld(TilesetPacker Package, out Tile[,] Tiles)
         {
-            Width = Package.Width;
-            Height = Package.Height;
+            int Width = Package.Width;
+            int Height = Package.Height;
             Tiles = new Tile[Width, Height];
             ushort Count = 0;
             int CurrentStep = 0;

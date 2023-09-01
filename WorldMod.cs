@@ -15,7 +15,7 @@ namespace CastleGenerator
 {
     public class WorldMod : ModSystem
     {
-        public static bool GenerateCastle = false;
+        public static bool GenerateCastle = true;
         public static bool IsCastle = false;
         public static List<RoomInfo> Rooms = new List<RoomInfo>();
 
