@@ -18,7 +18,6 @@ namespace CastleGenerator
         public bool IsInvalid { get { return InvalidZone; } }
         public List<ZoneMobDefinition> ZoneMobs = new List<ZoneMobDefinition>();
         public List<TileInfo> ZoneTileInfoCodes = new List<TileInfo>();
-        public Color[,] ColorMap = new Color[0, 0];
         public TilesetPacker.TileStep[,] ZoneTileMap = new TilesetPacker.TileStep[0, 0];
 
         public void LoadZoneTiles()
@@ -28,11 +27,17 @@ namespace CastleGenerator
             string ModName = myType.Namespace.Split('.')[0];
             TilesetDirectory = TilesetDirectory.Replace(ModName + "/", "");
             Mod mod = ModLoader.GetMod(ModName);
-            using (Stream s = mod.GetFileStream(TilesetDirectory))
+            try
             {
-                TilesetPacker p = new TilesetPacker();
-                p.Load(s); //At least the tile infos doesn't seems to be loading as intended.
-                TilesetPacker.UnpackWorld(p, out ZoneTileMap);
+                using (Stream s = mod.GetFileStream(TilesetDirectory))
+                {
+                    TilesetPacker p = new TilesetPacker();
+                    p.Load(s); //At least the tile infos doesn't seems to be loading as intended.
+                    TilesetPacker.UnpackWorld(p, out ZoneTileMap);
+                }
+            }
+            catch
+            {
             }
             /*if ((Found = ModContent.HasAsset(TilesetDirectory)))
             {
@@ -73,6 +78,15 @@ namespace CastleGenerator
             }
             ColorMap = null;
             ZoneMapTexture = null;*/
+        }
+
+        public void UnloadZone()
+        {
+            ZoneTileMap = null;
+            ZoneTileInfoCodes.Clear();
+            ZoneMobs.Clear();
+            ZoneTileInfoCodes = null;
+            ZoneMobs = null;
         }
 
         public TilesetPacker.TileStep[,] GetTilesetMap()

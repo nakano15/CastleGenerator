@@ -335,7 +335,6 @@ namespace CastleGenerator
             {
                 writer.Write(RepeatTimes);
                 writer.Write(HasTile);
-                if (!HasTile) return;
                 writer.Write(TileType);
                 writer.Write(WallType);
                 writer.Write(IsActuated);
@@ -360,7 +359,6 @@ namespace CastleGenerator
             {
                 RepeatTimes = reader.ReadUInt16();
                 HasTile = reader.ReadBoolean();
-                if (!HasTile) return;
                 TileType = reader.ReadUInt16();
                 WallType = reader.ReadUInt16();
                 IsActuated = reader.ReadBoolean();
