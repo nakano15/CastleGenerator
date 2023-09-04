@@ -1365,6 +1365,24 @@ namespace CastleGenerator.Generator
                     {
                         WorldGen.PlaceWall(TilePosX, TilePosY, t.WallType, mute: true);
                     }
+                    WorldGen.paintTile(TilePosX, TilePosY, t.TileColor);
+                    WorldGen.paintWall(TilePosX, TilePosY, t.WallColor);
+                    if (t.RedWire)
+                        WorldGen.PlaceWire(TilePosX, TilePosY);
+                    if (t.GreenWire)
+                        WorldGen.PlaceWire2(TilePosX, TilePosY);
+                    if (t.BlueWire)
+                        WorldGen.PlaceWire3(TilePosX, TilePosY);
+                    if (t.YellowWire)
+                        WorldGen.PlaceWire4(TilePosX, TilePosY);
+                    if (t.HasActuator)
+                        WorldGen.PlaceActuator(TilePosX, TilePosY);
+                    if (t.LiquidAmount == 0)
+                        WorldGen.EmptyLiquid(TilePosX, TilePosY);
+                    else
+                        WorldGen.PlaceLiquid(TilePosX, TilePosY, (byte)t.LiquidType, t.LiquidAmount);
+                    //if (t.IsActuated) //How?
+                    //    WorldGen.Tile
                     //Main.tile[TilePosX, TilePosY].CopyFrom(t);
                     //Color color = ColorMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y];
                     //Main.tile[TilePosX, TilePosY].HasTile = false;

@@ -19,19 +19,23 @@ namespace CastleGenerator
             TilesetPacker pack = new TilesetPacker();
             pack.Width = Main.maxTilesX;
             pack.Height = Main.maxTilesY;
-            TileStep LastStep = new TileStep();
+            TileStep LastStep = null;
             for (int y = 0; y < Main.maxTilesY; y++)
             {
                 for (int x = 0; x < Main.maxTilesX; x++)
                 {
                     Tile tile = Main.tile[x, y];
-                    if (!LastStep.IsSameTile(tile, true))
+                    if (LastStep == null || !LastStep.IsSameTile(tile, true))
                     {
-                        pack.TileSteps.Add(LastStep);
+                        if (LastStep != null) pack.TileSteps.Add(LastStep);
                         LastStep = new TileStep();
                         LastStep.StoreTileInfos(tile);
                     }
                 }
+            }
+            if (LastStep == null)
+            {
+                LastStep = new TileStep() {RepeatTimes = (ushort)(pack.Width * pack.Height) };
             }
             pack.TileSteps.Add(LastStep);
             /*string ExportLogInfos = "Packed world: Width " + pack.Width + "  Height: " + pack.Height + "\nTile Steps: " + pack.TileSteps.Count;
@@ -330,9 +334,10 @@ namespace CastleGenerator
             public void Save(BinaryWriter writer)
             {
                 writer.Write(RepeatTimes);
+                writer.Write(HasTile);
+                if (!HasTile) return;
                 writer.Write(TileType);
                 writer.Write(WallType);
-                writer.Write(HasTile);
                 writer.Write(IsActuated);
                 writer.Write(HasActuator);
                 writer.Write(HasUnactuatedTile);
@@ -354,9 +359,10 @@ namespace CastleGenerator
             public void Load(BinaryReader reader, int LastVersion)
             {
                 RepeatTimes = reader.ReadUInt16();
+                HasTile = reader.ReadBoolean();
+                if (!HasTile) return;
                 TileType = reader.ReadUInt16();
                 WallType = reader.ReadUInt16();
-                HasTile = reader.ReadBoolean();
                 IsActuated = reader.ReadBoolean();
                 HasActuator = reader.ReadBoolean();
                 HasUnactuatedTile = reader.ReadBoolean();
