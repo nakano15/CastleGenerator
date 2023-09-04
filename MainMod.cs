@@ -48,6 +48,15 @@ namespace CastleGenerator
             }
         }
 
+        public override void Unload()
+        {
+            foreach(Zone z in ZoneTypes) z.UnloadZone();
+            ZoneTypes.Clear();
+            ZoneTypes = null;
+            InvalidZone.UnloadZone();
+            InvalidZone = null;
+        }
+
         internal static void PostUpdatePlayerScripts() /* tModPorter Note: Removed. Use ModSystem.PostUpdatePlayers or ModSystem.PreUpdateNPCs */
         {
             if (WorldMod.IsCastle)
