@@ -19,14 +19,22 @@ namespace CastleGenerator
         public List<ZoneMobDefinition> ZoneMobs = new List<ZoneMobDefinition>();
         public List<TileInfo> ZoneTileInfoCodes = new List<TileInfo>();
         public Color[,] ColorMap = new Color[0, 0];
-        public Tile[,] ZoneTileMap = new Tile[0, 0];
+        public TilesetPacker.TileStep[,] ZoneTileMap = new TilesetPacker.TileStep[0, 0];
 
         public void LoadZoneTiles()
         {
             Type myType = this.GetType(); //How to load the tile infos?
             string TilesetDirectory = myType.Namespace.Replace(".", "/") + "/" + myType.Name + ".tiles";
-            bool Found;
-            if ((Found = ModContent.HasAsset(TilesetDirectory)))
+            string ModName = myType.Namespace.Split('.')[0];
+            TilesetDirectory = TilesetDirectory.Replace(ModName + "/", "");
+            Mod mod = ModLoader.GetMod(ModName);
+            using (Stream s = mod.GetFileStream(TilesetDirectory))
+            {
+                TilesetPacker p = new TilesetPacker();
+                p.Load(s); //At least the tile infos doesn't seems to be loading as intended.
+                TilesetPacker.UnpackWorld(p, out ZoneTileMap);
+            }
+            /*if ((Found = ModContent.HasAsset(TilesetDirectory)))
             {
                 using (Stream stream = ModContent.OpenRead(TilesetDirectory))
                 {
@@ -35,7 +43,7 @@ namespace CastleGenerator
                     TilesetPacker.UnpackWorld(p, out ZoneTileMap);
                 }
             }
-            throw new Exception("Found ? " + Found + "  Directory: " + TilesetDirectory);
+            throw new Exception("Found ? " + Found + "  Directory: " + TilesetDirectory);*/
         }
 
         public void LoadTexture()
@@ -67,7 +75,7 @@ namespace CastleGenerator
             ZoneMapTexture = null;*/
         }
 
-        public Tile[,] GetTilesetMap()
+        public TilesetPacker.TileStep[,] GetTilesetMap()
         {
             return ZoneTileMap;
         }

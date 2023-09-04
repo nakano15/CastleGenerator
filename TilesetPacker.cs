@@ -34,24 +34,32 @@ namespace CastleGenerator
                 }
             }
             pack.TileSteps.Add(LastStep);
+            /*string ExportLogInfos = "Packed world: Width " + pack.Width + "  Height: " + pack.Height + "\nTile Steps: " + pack.TileSteps.Count;
+            for (int i = 0; i < pack.TileSteps.Count; i++)
+            {
+                ExportLogInfos += "\n" + i + "= Has Tile? " + pack.TileSteps[i].HasTile + "  Tile ID: " + pack.TileSteps[i].TileType;
+            }
+            Console.WriteLine(ExportLogInfos);*/
+            //throw new Exception(ExportLogInfos);
             return pack;
         }
 
-        public static void UnpackWorld(TilesetPacker Package, out Tile[,] Tiles)
+        public static void UnpackWorld(TilesetPacker Package, out TilesetPacker.TileStep[,] Tiles)
         {
             int Width = Package.Width;
             int Height = Package.Height;
-            Tiles = new Tile[Width, Height];
+            Tiles = new TilesetPacker.TileStep[Width, Height];
             ushort Count = 0;
             int CurrentStep = 0;
+            TileStep Blank = new TileStep();
             for (int y = 0; y < Height; y++)
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    Tile tile;
+                    TilesetPacker.TileStep tile;
                     if (CurrentStep < Package.TileSteps.Count)
                     {
-                        tile = Package.TileSteps[CurrentStep].ExtractTileInfos();
+                        tile = Package.TileSteps[CurrentStep];
                         Count++;
                         if (Count >= Package.TileSteps[CurrentStep].RepeatTimes)
                         {
@@ -61,7 +69,7 @@ namespace CastleGenerator
                     }
                     else
                     {
-                        tile = new Tile();
+                        tile = Blank;
                     }
                     Tiles[x, y] = tile;
                 }
@@ -83,6 +91,7 @@ namespace CastleGenerator
 
         public void Load(Stream stream)
         {
+            TileSteps.Clear();
             using (BinaryReader reader = new BinaryReader(stream))
             {
                 int LastVersion = reader.ReadInt32();
@@ -198,7 +207,7 @@ namespace CastleGenerator
             
             public bool IsSameTile(Tile tile, bool Increment = false)
             {
-                if(HasTile == tile.HasTile && 
+                if (HasTile == tile.HasTile && 
                     TileType == tile.TileType && 
                     WallType == tile.WallType && 
                     IsActuated == tile.IsActuated && 
@@ -261,7 +270,34 @@ namespace CastleGenerator
 
             public Tile ExtractTileInfos()
             {
-                return new Tile()
+                Tile t = new Tile();
+                t.HasTile = this.HasTile;
+                t.TileType = this.TileType;
+                t.WallType = this.WallType;
+                t.IsActuated = this.IsActuated;
+                t.HasActuator = this.HasActuator;
+                t.Slope = (SlopeType)this.SlopeType;
+                t.BlockType = (BlockType)this.BlockType;
+                t.TileFrameX = this.TileFrameX;
+                t.TileFrameY = this.TileFrameY;
+                t.WallFrameX = this.WallFrameX;
+                t.WallFrameY = this.WallFrameY;
+                t.TileFrameNumber = this.TileFrameNum;
+                t.WallFrameNumber = this.WallFrameNum;
+                t.TileColor = this.TileColor; 
+                t.WallColor = this.WallColor;
+                t.LiquidType = this.LiquidType;
+                t.LiquidAmount = this.LiquidAmount;
+                t.RedWire = this.RedWire;
+                t.GreenWire = this.GreenWire;
+                t.BlueWire = this.BlueWire;
+                t.YellowWire = this.YellowWire;
+                t.IsTileInvisible = this.TileInvisible;
+                t.IsWallInvisible = this.WallInvisible;
+                t.IsTileFullbright = this.TileExtraBright;
+                t.IsWallFullbright = this.WallExtraBright;
+                return t;
+                /*return new Tile()
                 {
                     HasTile = this.HasTile, 
                     TileType = this.TileType,
@@ -288,7 +324,7 @@ namespace CastleGenerator
                     IsWallInvisible = this.WallInvisible,
                     IsTileFullbright = this.TileExtraBright,
                     IsWallFullbright = this.WallExtraBright
-                };
+                };*/
             }
 
             public void Save(BinaryWriter writer)

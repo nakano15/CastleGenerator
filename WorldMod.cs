@@ -76,6 +76,7 @@ namespace CastleGenerator
         {
             if(WorldMod.IsCastle)
                 layers.Insert(0, MainMod.MapBordersInterfaceLayer);
+            layers.Add(MainMod.DebugInfoLayer);
         }
 
         public override void PreWorldGen()

@@ -15,7 +15,7 @@ namespace CastleGenerator
         public const int ModVersion = 2;
         public static List<Zone> ZoneTypes = new List<Zone>();
         public static Zone InvalidZone;
-        public static LegacyGameInterfaceLayer MapBordersInterfaceLayer;
+        public static LegacyGameInterfaceLayer MapBordersInterfaceLayer, DebugInfoLayer;
         public static float Zoom = 2;
         private static bool DaytimeBackup = false;
         public static byte ScreenBlackoutTime = 0;
@@ -44,6 +44,7 @@ namespace CastleGenerator
             if (!Main.dedServ)
             {
                 MapBordersInterfaceLayer = new LegacyGameInterfaceLayer("Castle Generator: Map Borders", DrawMapBorders, InterfaceScaleType.Game);
+                DebugInfoLayer = new LegacyGameInterfaceLayer("Castle Generator: Debug Info", DebugDisplay, InterfaceScaleType.UI);
             }
         }
 
@@ -97,6 +98,30 @@ namespace CastleGenerator
                 Main.spriteBatch.Draw(TextureAssets.BlackTile.Value, new Rectangle(0, Main.screenHeight - BottomEdgeHeight, Main.screenWidth, BottomEdgeHeight), Color.Black);
             }
             //Utils.DrawBorderStringFourWay(Main.spriteBatch, Main.fontMouseText, "Top Edge: " + TopEdgeHeight + "\nBottom Edge: " + BottomEdgeHeight + "\nLeft Edge: " + LeftEdgeWidth + "\nRight Edge: " + RightEdgeWidth, Main.screenPosition.X, Main.screenPosition.Y, Color.White, Color.Black, Vector2.Zero);
+            return true;
+        }
+
+        private static bool DebugDisplay()
+        {
+            Vector2 Position = Vector2.Zero;
+            Zone z = ZoneTypes[0];
+            string s = "Tiles Width: " + z.ZoneTileMap.GetLength(0) + " Tiles Height: " + z.ZoneTileMap.GetLength(1) + "\n";
+            for (int y = 0; y < 7; y++)
+            {
+                for (int x = 0; x < 10; x++)
+                {
+                    s += "{";
+                    TilesetPacker.TileStep tile = z.ZoneTileMap[x, y];
+                    s += tile.HasTile.ToString();
+                    if (tile.HasTile)
+                    {
+                        s += ":" + tile.TileType;
+                    }
+                    s += "|"+ tile.WallType + "} ";
+                }
+                s+= "\n";
+            }
+            Utils.DrawBorderString(Main.spriteBatch, s, Position, Color.White, .7f);
             return true;
         }
     }

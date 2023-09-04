@@ -1346,15 +1346,26 @@ namespace CastleGenerator.Generator
 
         private void SpawnRoom(RoomPosition rp)
         {
-            Tile[,] TileMap = rp.room.ParentZone.GetTilesetMap();
+            TilesetPacker.TileStep[,] TileMap = rp.room.ParentZone.GetTilesetMap();
             Zone zone = rp.room.ParentZone;
-            throw new Exception("Tile map size: " + TileMap.GetLength(0) + " ~ " + TileMap.GetLength(1));
+            //throw new Exception("Tile map size: " + TileMap.GetLength(0) + " ~ " + TileMap.GetLength(1));
             for (int y = 0; y < rp.room.Height; y++)
             {
                 for (int x = 0; x < rp.room.Width; x++)
                 {
                     int TilePosX = rp.Position.X + x, TilePosY = rp.Position.Y + y;
-                    Main.tile[TilePosX, TilePosY].CopyFrom(TileMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y]);
+                    TilesetPacker.TileStep t = TileMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y];
+                    bool HasTile = t.HasTile;
+                    if (HasTile)
+                        WorldGen.PlaceTile(TilePosX, TilePosY, t.TileType, mute: true, forced: true, style: t.TileFrameNum);
+                    else
+                        WorldGen.KillTile(TilePosX, TilePosY, noItem: true);
+                    WorldGen.KillWall(TilePosX, TilePosY);
+                    if (t.WallType > 0)
+                    {
+                        WorldGen.PlaceWall(TilePosX, TilePosY, t.WallType, mute: true);
+                    }
+                    //Main.tile[TilePosX, TilePosY].CopyFrom(t);
                     //Color color = ColorMap[rp.room.RoomTileStartX + x, rp.room.RoomTileStartY + y];
                     //Main.tile[TilePosX, TilePosY].HasTile = false;
                     /*WorldGen.KillTile(TilePosX, TilePosY, noItem: true);
