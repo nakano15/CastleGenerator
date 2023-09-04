@@ -51,6 +51,7 @@ namespace CastleGenerator
 
         public override void PostUpdate()
         {
+            if (!MainMod.IsPC(Player)) return;
             int TileX = (int)(Player.Center.X * (1f / 16));
             int TileY = (int)(Player.Center.Y * (1f / 16));
             RoomInfo NewRoom = MyRoom;

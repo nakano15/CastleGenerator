@@ -975,10 +975,12 @@ namespace CastleGenerator.Generator
 
         private void SpawnRoomTiles()
         {
-            progress.Message = "Placing Generated Rooms";
+            int Total = rooms.Count, Current = 0;
             foreach(RoomPosition rp in rooms)
             {
+                progress.Message = "Placing Generated Rooms: " + MathF.Round((float)Current * 100 / Total) + "%";
                 SpawnRoom(rp);
+                Current++;
             }
         }
 

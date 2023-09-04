@@ -6,6 +6,7 @@ using Terraria;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria.UI;
+using System;
 
 namespace CastleGenerator
 {
@@ -22,6 +23,8 @@ namespace CastleGenerator
         public const string IsCastleString = "IsCastle";
         private static int PortalBlinkCounter = 0;
         public static float PortalBlinkValue = 1;
+        private static Mod TerraGuardiansMod;
+        private static Func<Player, bool> TgCheckIsCompanion = null;
 
         public override object Call(params object[] args)
         {
@@ -55,6 +58,24 @@ namespace CastleGenerator
             ZoneTypes = null;
             InvalidZone.UnloadZone();
             InvalidZone = null;
+            TerraGuardiansMod = null;
+            TgCheckIsCompanion = null;
+        }
+
+        public static bool IsPC(Player player)
+        {
+            if (TerraGuardiansMod != null)
+                return !TgCheckIsCompanion(player);
+            return true;
+        }
+
+        public override void PostSetupContent()
+        {
+            if (ModLoader.HasMod("terraguardians"))
+            {
+                TerraGuardiansMod = ModLoader.GetMod("terraguardians");
+                TgCheckIsCompanion = (Func<Player, bool>)TerraGuardiansMod.Call("IsCompanionDelegate");
+            }
         }
 
         internal static void PostUpdatePlayerScripts() /* tModPorter Note: Removed. Use ModSystem.PostUpdatePlayers or ModSystem.PreUpdateNPCs */
