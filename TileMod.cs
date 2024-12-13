@@ -1,5 +1,6 @@
 ﻿using Terraria.ModLoader;
 using Terraria;
+using Terraria.ID;
 using Microsoft.Xna.Framework;
 
 namespace CastleGenerator
@@ -23,51 +24,62 @@ namespace CastleGenerator
         {
             if (!WorldMod.IsCastle)
                 return;
-            if(type == Terraria.ID.TileID.Containers || type == Terraria.ID.TileID.Containers2)
+            Tile tile = Main.tile[i, j];
+            switch (type)
             {
-                Tile tile = Main.tile[i, j];
-                if(tile.TileFrameY < 36)
-                {
-                    PlayerMod player = Main.LocalPlayer.GetModPlayer<PlayerMod>();
-                    Point TileBottom = new Point(i, j);
-                    if (tile.TileFrameX % (1f / 18) == 0)
-                        TileBottom.X++;
-                    if (tile.TileFrameY % (1f / 18) == 0)
-                        TileBottom.Y++;
-                    if (!player.pwi.TreasuresGot.Contains(TileBottom))
+                case TileID.Containers:
+                case TileID.Containers2:
+                    if(tile.TileFrameY < 36)
                     {
-                        bool HasInventorySpace = false;
-                        for(int e = 0; e < 50; e++)
+                        PlayerMod player = Main.LocalPlayer.GetModPlayer<PlayerMod>();
+                        Point TileBottom = new Point(i, j);
+                        if (tile.TileFrameX % (1f / 18) == 0)
+                            TileBottom.X++;
+                        if (tile.TileFrameY % (1f / 18) == 0)
+                            TileBottom.Y++;
+                        if (!player.pwi.TreasuresGot.Contains(TileBottom))
                         {
-                            if(player.Player.inventory[e].type == 0)
+                            bool HasInventorySpace = false;
+                            for(int e = 0; e < 50; e++)
                             {
-                                HasInventorySpace = true;
-                                break;
-                            }
-                        }
-                        if (!HasInventorySpace)
-                        {
-                            CombatText.NewText(player.Player.getRect(), Color.Red, "Inventory is full!");
-                        }
-                        else
-                        {
-                            RoomInfo room = player.MyRoom;
-                            if (room == null) return;
-                            Room baseRoom = room.GetRoom;
-                            foreach (RoomInfo.TreasureSlot treasure in room.Treasures)
-                            {
-                                int TreasureX = room.RoomX + baseRoom.TreasureSpawnPosition[treasure.Slot].PositionX - baseRoom.RoomTileStartX;
-                                int TreasureY = room.RoomY + baseRoom.TreasureSpawnPosition[treasure.Slot].PositionY - baseRoom.RoomTileStartY;
-                                if (TreasureX == TileBottom.X && TreasureY == TileBottom.Y)
+                                if(player.Player.inventory[e].type == 0)
                                 {
-                                    Item.NewItem(Item.GetSource_NaturalSpawn(), player.Player.Center, treasure.ItemID);
+                                    HasInventorySpace = true;
                                     break;
                                 }
                             }
-                            player.pwi.TreasuresGot.Add(TileBottom);
+                            if (!HasInventorySpace)
+                            {
+                                CombatText.NewText(player.Player.getRect(), Color.Red, "Inventory is full!");
+                            }
+                            else
+                            {
+                                RoomInfo room = player.MyRoom;
+                                if (room == null) return;
+                                Room baseRoom = room.GetRoom;
+                                foreach (RoomInfo.TreasureSlot treasure in room.Treasures)
+                                {
+                                    int TreasureX = room.RoomX + baseRoom.TreasureSpawnPosition[treasure.Slot].PositionX - baseRoom.RoomTileStartX;
+                                    int TreasureY = room.RoomY + baseRoom.TreasureSpawnPosition[treasure.Slot].PositionY - baseRoom.RoomTileStartY;
+                                    if (TreasureX == TileBottom.X && TreasureY == TileBottom.Y)
+                                    {
+                                        Item.NewItem(Item.GetSource_NaturalSpawn(), player.Player.Center, treasure.ItemID);
+                                        break;
+                                    }
+                                }
+                                player.pwi.TreasuresGot.Add(TileBottom);
+                            }
                         }
                     }
-                }
+                    break;
+                case TileID.Beds:
+                    if (!Player.IsHoveringOverABottomSideOfABed(i, j))
+                    {
+                        int SpawnX = ((tile.TileFrameX % 72) - 36) / 18 + i, 
+                            SpawnY = (36 - (tile.TileFrameY % 36)) / 18 + j - 2;
+                        Main.LocalPlayer.ChangeSpawn(SpawnX, SpawnY);
+                    }
+                    break;
             }
         }
     }

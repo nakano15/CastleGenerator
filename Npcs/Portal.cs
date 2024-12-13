@@ -95,7 +95,7 @@ namespace CastleGenerator.Npcs
             if (firstButton)
             {
                 CastleSubworld.ChangeFinalityItem(LootReward);
-                CastleSubworld.ChangeRoomsToGenerate(40, 60);
+                CastleSubworld.ChangeRoomsToGenerate(80, 120);
                 CastleSubworld.ChangeDifficulty(1, 2);
                 PlaceLoots(Main.LocalPlayer);
                 SubworldSystem.Enter<CastleSubworld>();
@@ -141,7 +141,7 @@ namespace CastleGenerator.Npcs
 
         public override void DrawEffects(ref Color drawColor)
         {
-            drawColor = new Color(color * MainMod.PortalBlinkValue);
+            drawColor = new Color(color * WorldMod.PortalBlinkValue);
             Lighting.AddLight(NPC.Center, color * 1.5f * NPC.scale);
         }
     }

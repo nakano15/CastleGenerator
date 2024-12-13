@@ -15,11 +15,14 @@ namespace CastleGenerator
 {
     public class WorldMod : ModSystem
     {
-        public static bool GenerateCastle = true;
+        public static bool GenerateCastle = false;
         public static bool IsCastle = false;
         public static List<RoomInfo> Rooms = new List<RoomInfo>();
+        private static bool DaytimeBackup = false;
+        private static int PortalBlinkCounter = 0;
+        public static float PortalBlinkValue = 1;
 
-        public override void OnWorldLoad()/* tModPorter Suggestion: Also override OnWorldUnload, and mirror your worldgen-sensitive data initialization in PreWorldGen */
+        public override void OnWorldUnload()
         {
             IsCastle = false;
             Rooms.Clear();
@@ -36,7 +39,7 @@ namespace CastleGenerator
             }
         }
 
-        public override void SaveWorldData(TagCompound tag)/* tModPorter Suggestion: Edit tag parameter instead of returning new TagCompound */
+        public override void SaveWorldData(TagCompound tag)
         {
             tag.Add("ModVersion", MainMod.ModVersion);
             tag.Add("IsCastle", IsCastle); //Room Infos needs to be saved too. Their zones must be saved by name.
@@ -56,7 +59,7 @@ namespace CastleGenerator
 
         public override void ModifyTransformMatrix(ref SpriteViewMatrix Transform)
         {
-            if (WorldMod.IsCastle)
+            if (IsCastle)
             {
                 Transform.Zoom *= MainMod.Zoom;
             }
@@ -64,27 +67,30 @@ namespace CastleGenerator
 
         public override void PostUpdatePlayers()
         {
-            MainMod.PostUpdatePlayerScripts();
+            if (IsCastle)
+            {
+                DaytimeBackup = Main.dayTime;
+                Main.dayTime = false;
+            }
+            PortalBlinkCounter++;
+            PortalBlinkValue = 1f - (float)System.Math.Sin(PortalBlinkCounter * 0.2f) * 0.2f;
         }
 
         public override void PostUpdateNPCs()
         {
-            MainMod.PostUpdateNpcScript();
+            if (IsCastle)
+                Main.dayTime = DaytimeBackup;
         }
 
         public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
         {
-            if(WorldMod.IsCastle)
+            if(IsCastle)
                 layers.Insert(0, MainMod.MapBordersInterfaceLayer);
-            //layers.Add(MainMod.DebugInfoLayer);
         }
 
         public override void PreWorldGen()
         {
-            /*foreach (Zone z in MainMod.ZoneTypes)
-            {
-                z.LoadTexture();
-            }*/
+            
         }
     }
 }

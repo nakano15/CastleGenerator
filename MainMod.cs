@@ -18,11 +18,8 @@ namespace CastleGenerator
         public static Zone InvalidZone;
         public static LegacyGameInterfaceLayer MapBordersInterfaceLayer, DebugInfoLayer;
         public static float Zoom = 2;
-        private static bool DaytimeBackup = false;
         public static byte ScreenBlackoutTime = 0;
-        public const string IsCastleString = "IsCastle";
-        private static int PortalBlinkCounter = 0;
-        public static float PortalBlinkValue = 1;
+        public const string IsCastleCallString = "IsCastle";
         private static Mod TerraGuardiansMod;
         private static Func<Player, bool> TgCheckIsCompanion = null;
 
@@ -32,7 +29,7 @@ namespace CastleGenerator
             {
                 switch ((string)args[0])
                 {
-                    case IsCastleString:
+                    case IsCastleCallString:
                         return WorldMod.IsCastle;
                 }
             }
@@ -76,23 +73,6 @@ namespace CastleGenerator
                 TerraGuardiansMod = ModLoader.GetMod("terraguardians");
                 TgCheckIsCompanion = (Func<Player, bool>)TerraGuardiansMod.Call("IsCompanionDelegate");
             }
-        }
-
-        internal static void PostUpdatePlayerScripts() /* tModPorter Note: Removed. Use ModSystem.PostUpdatePlayers or ModSystem.PreUpdateNPCs */
-        {
-            if (WorldMod.IsCastle)
-            {
-                DaytimeBackup = Main.dayTime;
-                Main.dayTime = false;
-            }
-            PortalBlinkCounter++;
-            PortalBlinkValue = 1f - (float)System.Math.Sin(PortalBlinkCounter * 0.2f) * 0.2f;
-        }
-
-        public static void PostUpdateNpcScript()
-        {
-            if (WorldMod.IsCastle)
-                Main.dayTime = DaytimeBackup;
         }
 
         private static bool DrawMapBorders()

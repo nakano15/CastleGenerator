@@ -122,6 +122,7 @@ namespace CastleGenerator.Generator
         private void CreateSpawnPoint()
         {
             progress.Message = "Placing Castle Entrance.";
+            Main.statusText = progress.Message;
             Zone PickedZone = null;
             {
                 List<Zone> BegginingZone = new List<Zone>();
@@ -238,6 +239,7 @@ namespace CastleGenerator.Generator
                     double Percentage = System.Math.Round((double)CurrentCastleDimension * 100 / MaxSize, 1);
                     GenerationPercentage = Percentage;
                     progress.Message = "Generating Castle: Rooms Created: " + rooms.Count + " - Filled " + Percentage + "% of the map.";
+                    Main.statusText = progress.Message;
                     if (StuckCheck == 0)
                     {
                         if (Percentage >= 60)
@@ -468,6 +470,7 @@ namespace CastleGenerator.Generator
             for (int i = 0; i < LastMap; i++)
             {
                 progress.Message = "Generating Castle: Adding extra rooms [" + i + "/" + LastMap + "].";
+                Main.statusText = progress.Message;
                 RoomPosition roomPos = rooms[i];
                 Room room = roomPos.room;
                 Zone zone = room.ParentZone;
@@ -694,6 +697,7 @@ namespace CastleGenerator.Generator
         private void PlaceMonsters()
         {
             progress.Message = "Adding Monsters to Rooms";
+            Main.statusText = progress.Message;
             bool FirstRoom = true;
             foreach(RoomPosition room in rooms)
             {
@@ -740,6 +744,7 @@ namespace CastleGenerator.Generator
         {
             if (GenerateLootTable) CreateLootTable();
             progress.Message = "Adding Treasures to the Castle";
+            Main.statusText = progress.Message;
             float LifeCrystalSpawnChance = 0.5f;
             float TreasureSpawnChance = 0.2f;
             bool SpawnedFinalityLoot = false;
@@ -976,9 +981,11 @@ namespace CastleGenerator.Generator
         private void SpawnRoomTiles()
         {
             int Total = rooms.Count, Current = 0;
+            float RoomPercentageChange = 1f / Total;
             foreach(RoomPosition rp in rooms)
             {
-                progress.Message = "Placing Generated Rooms: " + MathF.Round((float)Current * 100 / Total) + "%";
+                progress.Message = "Placing Generated Rooms: " + Math.Round((float)Current * RoomPercentageChange) + "%";
+                Main.statusText = progress.Message;
                 SpawnRoom(rp);
                 Current++;
             }
@@ -1147,6 +1154,7 @@ namespace CastleGenerator.Generator
         private void CheckForDisconnectedConnectors()
         {
             progress.Message = "Blocking Doors with Disconnected Connectors.";
+            Main.statusText = progress.Message;
             foreach(RoomPosition room in rooms)
             {
                 foreach(Connector c in room.room.RoomConnectors)
@@ -1197,6 +1205,7 @@ namespace CastleGenerator.Generator
         private void FinishGeneration()
         {
             progress.Message = "Finishing up.";
+            Main.statusText = progress.Message;
             WorldMod.Rooms.Clear();
             //Turn the RoomPosition stuff into RoomInfo, and place them on WorldMod.Rooms
             while (rooms.Count > 0)

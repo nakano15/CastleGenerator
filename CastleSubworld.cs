@@ -9,6 +9,7 @@ using Terraria;
 using Terraria.IO;
 using Terraria.WorldBuilding;
 using Terraria.Localization;
+using Microsoft.Xna.Framework;
 
 namespace CastleGenerator
 {
@@ -35,6 +36,16 @@ namespace CastleGenerator
                 gen.Add(Castle);
                 return gen;
             }
+        }
+
+        public override void OnEnter()
+        {
+            SubworldSystem.hideUnderworld = true;
+        }
+
+        public override void OnExit()
+        {
+            
         }
 
         public static void ChangeFinalityItem(int ItemID)
@@ -66,6 +77,7 @@ namespace CastleGenerator
         public void InitializeCastleWorld(GenerationProgress progress, GameConfiguration configuration)
         {
             progress.Message = "Initializing Castle Generation";
+            Main.statusText = progress.Message;
             Castle.InitializeCastle();
             Castle.Finality = FinalityItem;
             Castle.CreateLifeCrystals = false;
@@ -94,6 +106,7 @@ namespace CastleGenerator
         {
             Terraria.Utilities.UnifiedRandom genRand = Castle.rand;
             progress.Message = Lang.gen[0].Value;
+            Main.statusText = progress.Message;
             int num700 = 0;
             int num701 = 0;
             Main.worldSurface = (double)Main.maxTilesY * 0.3;
